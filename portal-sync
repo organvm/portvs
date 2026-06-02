@@ -74,12 +74,17 @@ def load_outbox(path: str) -> dict[str, dict]:
 
 
 def merge(existing: dict[str, dict], incoming: dict[str, dict]) -> dict[str, dict]:
-    """Merge incoming nodes into existing. Latest modified wins. Resolve version chains."""
+    """Merge incoming nodes into existing. Incoming wins by default — publishing
+    is an explicit intent signal. Timestamp is metadata, not authority."""
     merged = dict(existing)
     for nid, node in incoming.items():
         if nid in merged:
-            if node.get("modified", "") > merged[nid].get("modified", ""):
-                merged[nid] = node
+            # Incoming wins: the act of publishing is explicit intent to update.
+            # Preserve the incoming node's fields, but keep the existing 'created'
+            # timestamp if it's older (it records original creation, not last publish).
+            if "created" in merged[nid] and merged[nid].get("created", "") < node.get("created", ""):
+                node["created"] = merged[nid]["created"]
+            merged[nid] = node
         else:
             merged[nid] = node
 
@@ -226,6 +231,12 @@ def main():
     # Write
     write_graph(merged)
     print(f"WRITTEN: {GRAPH_FILE} ({len(merged)} nodes)")
+
+    # Clear consumed outbox files
+    for f in outbox_files:
+        os.remove(f)
+        print(f"CLEARED: {f}")
+
 
 
 if __name__ == "__main__":
