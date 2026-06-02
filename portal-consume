@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""portal-consume — read the canonical graph and emit context for agent startup.
+
+Outputs a compact summary of the graph filtered by scope, so the agent
+sees what changed and what's active without loading the full graph.
+
+Usage:
+  portal-consume                      # all scope=global, phase=accepted|done
+  portal-consume --scope project:~/Code/organvm/universal-mail--automation
+  portal-consume --domain governance  # filter by domain
+  portal-consume --since 2026-06-01   # only nodes modified since date
+  portal-consume --latest 5           # only the 5 most recently modified
+  portal-consume --summary            # one-line summary only
+"""
+
+import json
+import sys
+import argparse
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
+
+HOME = Path.home()
+GRAPH_FILE = HOME / "_portal" / "graph.jsonl"
+
+
+def load_graph() -> list[dict]:
+    """Load all nodes from the canonical graph."""
+    if not GRAPH_FILE.exists():
+        return []
+    nodes = []
+    with open(GRAPH_FILE) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                nodes.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return nodes
+
+
+def filter_nodes(nodes: list[dict], args) -> list[dict]:
+    """Filter nodes by scope, domain, phase, recency."""
+    result = []
+    for node in nodes:
+        # Phase filter: default to durable
+        if args.phase:
+            if node.get("phase") not in args.phase:
+                continue
+        else:
+            if node.get("phase") not in ("accepted", "done"):
+                continue
+
+        # Scope filter
+        if args.scope:
+            if node.get("scope") != args.scope:
+                continue
+        else:
+            if node.get("scope") not in ("global", None):
+                continue
+
+        # Domain filter
+        if args.domain and node.get("domain") != args.domain:
+            continue
+
+        # Since filter
+        if args.since:
+            try:
+                mod = datetime.fromisoformat(node.get("modified", "1970-01-01"))
+                if mod < args.since:
+                    continue
+            except (ValueError, TypeError):
+                continue
+
+        result.append(node)
+
+    # Sort by modified desc
+    result.sort(key=lambda n: n.get("modified", ""), reverse=True)
+
+    # Limit
+    if args.latest:
+        result = result[:args.latest]
+
+    return result
+
+
+def format_summary(nodes: list[dict]) -> str:
+    """Format a one-line summary of the graph state."""
+    total = sum(1 for _ in open(GRAPH_FILE)) if GRAPH_FILE.exists() else 0
+    domains = {}
+    for n in nodes:
+        domains[n.get("domain","?")] = domains.get(n.get("domain","?"), 0) + 1
+    parts = [f"{total} total nodes", f"{len(nodes)} active"]
+    if domains:
+        parts.append(" | ".join(f"{d}:{c}" for d,c in sorted(domains.items())))
+    return "PORTVS: " + " · ".join(parts)
+
+
+def format_context(nodes: list[dict]) -> str:
+    """Format nodes as readable context block."""
+    lines = ["## PORTVS — Active Graph State", ""]
+    domains_seen: set[str] = set()
+    for node in nodes:
+        domain = node.get("domain", "?")
+        if domain not in domains_seen:
+            lines.append(f"### {domain.title()}")
+            domains_seen.add(domain)
+        nid = node.get("id", "?")
+        phase = node.get("phase", "?")
+        content = node.get("content", "")[:200]
+        scope = node.get("scope", "global")
+        author = node.get("author", "?")
+        lines.append(f"- **[{phase}]** {nid} ({author}, {scope}): {content}")
+    return "\n".join(lines)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="PORTVS consume — read graph, emit context")
+    parser.add_argument("--scope", help="Filter by scope (e.g. 'global', 'project:~/Code/...')")
+    parser.add_argument("--domain", help="Filter by domain")
+    parser.add_argument("--phase", nargs="+", help="Filter by phase(s)")
+    parser.add_argument("--since", help="Only nodes modified since date (ISO format)")
+    parser.add_argument("--latest", type=int, help="Only the N most recently modified")
+    parser.add_argument("--summary", action="store_true", help="One-line summary only")
+    parser.add_argument("--json", action="store_true", help="Output as JSON array")
+
+    args = parser.parse_args()
+
+    # Parse --since
+    if args.since:
+        try:
+            args.since = datetime.fromisoformat(args.since)
+        except ValueError:
+            args.since = None
+
+    nodes = load_graph()
+    filtered = filter_nodes(nodes, args)
+
+    if args.summary:
+        print(format_summary(filtered))
+    elif args.json:
+        print(json.dumps(filtered, indent=2, ensure_ascii=False))
+    else:
+        print(format_context(filtered))
+        print()
+        print(format_summary(nodes))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,232 @@
+#!/usr/bin/env python3
+"""portal-sync — deterministic aggregator for the PORTVS Reflection Membrane.
+
+Reads all agent outboxes (~/.<agent>/portal-out/*.jsonl), merges by node ID,
+and writes the canonical graph to ~/_portal/graph.jsonl.
+
+Merge rules (deterministic):
+  - Duplicate 'id': latest 'modified' timestamp wins.
+  - Version chain: if node.supersedes points to an existing node,
+    superseded node's .superseded_by is set, .phase → 'retired'.
+  - Archive (--prune): nodes with phase='retired' older than N days
+    move to ~/_portal/archive/graph-YYYY-MM.jsonl.
+
+Usage:
+  portal-sync                # merge + write canonical graph
+  portal-sync --prune        # merge + archive retired nodes >90 days
+  portal-sync --prune 30     # merge + archive retired nodes >30 days
+  portal-sync --validate     # validate graph integrity (no write)
+  portal-sync --dry-run      # show what would change (no write)
+"""
+
+import json
+import os
+import sys
+import glob
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+from typing import Optional
+
+HOME = Path.home()
+PORTAL_DIR = HOME / "_portal"
+GRAPH_FILE = PORTAL_DIR / "graph.jsonl"
+ARCHIVE_DIR = PORTAL_DIR / "archive"
+OUTBOX_GLOB = str(HOME / ".claude" / "portal-out" / "*.jsonl")
+VALID_PHASES = {"ephemeral", "draft", "proposed", "accepted", "done", "retired", "archive"}
+DEFAULT_PRUNE_DAYS = 90
+
+
+def load_graph() -> dict[str, dict]:
+    """Load the existing canonical graph into a dict keyed by node ID."""
+    nodes = {}
+    if GRAPH_FILE.exists():
+        with open(GRAPH_FILE) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    node = json.loads(line)
+                    nodes[node["id"]] = node
+                except (json.JSONDecodeError, KeyError):
+                    continue
+    return nodes
+
+
+def load_outbox(path: str) -> dict[str, dict]:
+    """Load nodes from one outbox file, keeping latest modified per ID."""
+    nodes = {}
+    if not os.path.exists(path):
+        return nodes
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                node = json.loads(line)
+                nid = node["id"]
+                if nid not in nodes or node.get("modified", "") > nodes[nid].get("modified", ""):
+                    nodes[nid] = node
+            except (json.JSONDecodeError, KeyError):
+                continue
+    return nodes
+
+
+def merge(existing: dict[str, dict], incoming: dict[str, dict]) -> dict[str, dict]:
+    """Merge incoming nodes into existing. Latest modified wins. Resolve version chains."""
+    merged = dict(existing)
+    for nid, node in incoming.items():
+        if nid in merged:
+            if node.get("modified", "") > merged[nid].get("modified", ""):
+                merged[nid] = node
+        else:
+            merged[nid] = node
+
+    # Resolve version chains: supersedes → set superseded_by + retire
+    for nid, node in list(merged.items()):
+        supersedes = node.get("supersedes")
+        if supersedes and supersedes in merged:
+            superseded = merged[supersedes]
+            if superseded.get("superseded_by") != nid:
+                superseded["superseded_by"] = nid
+                if superseded.get("phase") not in ("retired", "archive"):
+                    superseded["phase"] = "retired"
+                merged[supersedes] = superseded
+
+    return merged
+
+
+def write_graph(nodes: dict[str, dict]):
+    """Write canonical graph, sorted by ID for deterministic output."""
+    sorted_nodes = sorted(nodes.values(), key=lambda n: n["id"])
+    with open(GRAPH_FILE, "w") as f:
+        for node in sorted_nodes:
+            f.write(json.dumps(node, ensure_ascii=False) + "\n")
+
+
+def prune_archive(nodes: dict[str, dict], days: int) -> dict[str, dict]:
+    """Move retired nodes older than `days` to archive. Returns remaining nodes."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    remaining = {}
+    archived = []
+
+    for nid, node in nodes.items():
+        if node.get("phase") == "retired":
+            try:
+                mod = datetime.fromisoformat(node.get("modified", "1970-01-01T00:00:00Z"))
+            except ValueError:
+                mod = datetime(1970, 1, 1, tzinfo=timezone.utc)
+            if mod < cutoff:
+                archived.append(node)
+                continue
+        remaining[nid] = node
+
+    if archived:
+        ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+        month_tag = datetime.now(timezone.utc).strftime("%Y-%m")
+        archive_file = ARCHIVE_DIR / f"graph-{month_tag}.jsonl"
+        mode = "a" if archive_file.exists() else "w"
+        with open(archive_file, mode) as f:
+            for node in sorted(archived, key=lambda n: n["id"]):
+                f.write(json.dumps(node, ensure_ascii=False) + "\n")
+        print(f"ARCHIVED: {len(archived)} nodes → {archive_file}")
+
+    return remaining
+
+
+def validate(nodes: dict[str, dict]) -> list[str]:
+    """Validate graph integrity. Returns list of issues."""
+    issues = []
+    ids_seen: set[str] = set()
+    for nid, node in nodes.items():
+        # Required fields
+        for field in ("id", "phase", "domain", "version", "created", "content"):
+            if field not in node:
+                issues.append(f"{nid}: missing required field '{field}'")
+        # Valid phase
+        if node.get("phase") not in VALID_PHASES:
+            issues.append(f"{nid}: invalid phase '{node.get('phase')}'")
+        # Version chain: supersedes must point to existing node
+        supersedes = node.get("supersedes")
+        if supersedes and supersedes not in nodes:
+            issues.append(f"{nid}: supersedes '{supersedes}' not found in graph")
+        # Version chain: superseded_by must point back
+        superseded_by = node.get("superseded_by")
+        if superseded_by and superseded_by not in nodes:
+            issues.append(f"{nid}: superseded_by '{superseded_by}' not found in graph")
+        # author
+        if node.get("author") not in ("claude", "codex", "gemini", "human", "portal-sync", None):
+            issues.append(f"{nid}: unknown author '{node.get('author')}'")
+        ids_seen.add(nid)
+
+    # Detect broken back-references
+    for nid, node in nodes.items():
+        sb = node.get("superseded_by")
+        if sb and sb in nodes:
+            if nodes[sb].get("supersedes") != nid:
+                issues.append(f"{nid}: superseded_by '{sb}' but {sb}.supersedes != '{nid}'")
+
+    return issues
+
+
+def main():
+    args = set(sys.argv[1:])
+    dry_run = "--dry-run" in args
+    do_prune = "--prune" in args
+    do_validate = "--validate" in args
+    prune_days = DEFAULT_PRUNE_DAYS
+
+    # Parse prune days
+    for i, arg in enumerate(sys.argv):
+        if arg == "--prune" and i + 1 < len(sys.argv):
+            try:
+                prune_days = int(sys.argv[i + 1])
+            except ValueError:
+                pass
+
+    # Load
+    existing = load_graph()
+    outbox_files = glob.glob(OUTBOX_GLOB)
+    incoming: dict[str, dict] = {}
+    for f in outbox_files:
+        incoming.update(load_outbox(f))
+
+    if not incoming and not do_prune and not do_validate:
+        print("portal-sync: no outbox files found, graph unchanged")
+        return
+
+    print(f"portal-sync: {len(existing)} existing nodes, {len(incoming)} incoming from {len(outbox_files)} outbox files")
+
+    if do_validate:
+        issues = validate(existing)
+        if issues:
+            print(f"VALIDATION FAILED: {len(issues)} issues")
+            for issue in issues:
+                print(f"  - {issue}")
+            sys.exit(1)
+        print("VALIDATION PASSED: graph integrity intact")
+        return
+
+    # Merge
+    merged = merge(existing, incoming)
+    new_count = len(merged) - len(existing)
+    updated_count = sum(1 for nid in incoming if nid in existing)
+    print(f"Merge: {new_count} new, {updated_count} updated, {len(merged)} total")
+
+    # Prune
+    if do_prune:
+        merged = prune_archive(merged, prune_days)
+        print(f"After prune: {len(merged)} nodes remain")
+
+    if dry_run:
+        print("DRY-RUN: no changes written")
+        return
+
+    # Write
+    write_graph(merged)
+    print(f"WRITTEN: {GRAPH_FILE} ({len(merged)} nodes)")
+
+
+if __name__ == "__main__":
+    main()

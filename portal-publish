@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+"""portal-publish — write a node to Claude's outbox for portal-sync aggregation.
+
+Usage:
+  portal-publish --id NODE-XXX --phase accepted --domain plan --content "..." [--scope global] [--tags tag1,tag2] [--confidence 0.9] [--supersedes NODE-YYY]
+  portal-publish --from-stdin           # read JSON node from stdin
+  portal-publish --list                 # list outbox contents
+  portal-publish --clear                # clear outbox (after portal-sync consumed)
+"""
+
+import json
+import os
+import sys
+import argparse
+from datetime import datetime, timezone
+from pathlib import Path
+
+HOME = Path.home()
+OUTBOX_DIR = HOME / ".claude" / "portal-out"
+
+
+def get_outbox_file() -> Path:
+    """Return the current session's outbox file path."""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    OUTBOX_DIR.mkdir(parents=True, exist_ok=True)
+    return OUTBOX_DIR / f"session-{today}.jsonl"
+
+
+def publish_node(node: dict):
+    """Append a node to the outbox."""
+    required = ("id", "phase", "domain", "content")
+    for field in required:
+        if field not in node:
+            print(f"ERROR: missing required field '{field}'")
+            sys.exit(1)
+
+    node.setdefault("version", 1)
+    node.setdefault("author", "claude")
+    node.setdefault("confidence", 0.8)
+    node.setdefault("scope", "global")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    node.setdefault("created", now)
+    node["modified"] = now
+
+    outfile = get_outbox_file()
+    with open(outfile, "a") as f:
+        f.write(json.dumps(node, ensure_ascii=False) + "\n")
+    print(f"PUBLISHED: {node['id']} → {outfile}")
+
+
+def list_outbox():
+    """List outbox contents."""
+    if not OUTBOX_DIR.exists():
+        print("No outbox directory.")
+        return
+    for f in sorted(OUTBOX_DIR.glob("*.jsonl")):
+        count = sum(1 for _ in open(f))
+        print(f"  {f.name} ({count} nodes)")
+
+
+def clear_outbox():
+    """Clear the outbox directory."""
+    if not OUTBOX_DIR.exists():
+        return
+    for f in OUTBOX_DIR.glob("*.jsonl"):
+        f.unlink()
+    print("Outbox cleared.")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="PORTVS publish — write nodes to Claude's outbox")
+    parser.add_argument("--id", help="Node ID (e.g. MEM-042)")
+    parser.add_argument("--phase", default="draft",
+                       choices=["ephemeral","draft","proposed","accepted","done","retired"])
+    parser.add_argument("--domain", choices=["governance","memory","plan","irf","atom","pipeline","convention","skill","decision"])
+    parser.add_argument("--content", help="Node content text")
+    parser.add_argument("--scope", default="global")
+    parser.add_argument("--tags", help="Comma-separated tags")
+    parser.add_argument("--confidence", type=float, default=0.8)
+    parser.add_argument("--supersedes", help="ID of node this version supersedes")
+    parser.add_argument("--from-stdin", action="store_true", help="Read JSON node from stdin")
+    parser.add_argument("--list", action="store_true", help="List outbox contents")
+    parser.add_argument("--clear", action="store_true", help="Clear outbox files")
+
+    args = parser.parse_args()
+
+    if args.list:
+        list_outbox()
+        return
+
+    if args.clear:
+        clear_outbox()
+        return
+
+    if args.from_stdin:
+        data = sys.stdin.read().strip()
+        if not data:
+            print("ERROR: no data on stdin")
+            sys.exit(1)
+        node = json.loads(data)
+        publish_node(node)
+        return
+
+    if not args.id or not args.domain or not args.content:
+        parser.print_help()
+        sys.exit(1)
+
+    node = {
+        "id": args.id,
+        "phase": args.phase,
+        "domain": args.domain,
+        "content": args.content,
+        "scope": args.scope,
+        "confidence": args.confidence,
+    }
+    if args.supersedes:
+        node["supersedes"] = args.supersedes
+    if args.tags:
+        node["tags"] = args.tags.split(",")
+
+    publish_node(node)
+
+
+if __name__ == "__main__":
+    main()
