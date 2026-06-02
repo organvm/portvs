@@ -237,6 +237,29 @@ def main():
         os.remove(f)
         print(f"CLEARED: {f}")
 
+    # Auto-commit to PORTVS repo if it's a git repo
+    portal_dir = str(GRAPH_FILE.parent)
+    git_dir = os.path.join(portal_dir, ".git")
+    if os.path.isdir(git_dir):
+        import subprocess
+        try:
+            subprocess.run(["git", "-C", portal_dir, "add", "graph.jsonl"], capture_output=True)
+            result = subprocess.run(
+                ["git", "-C", portal_dir, "commit", "-m",
+                 f"sync: {new_count} new, {updated_count} updated, {len(merged)} total"],
+                capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                print(f"COMMITTED: PORTVS graph")
+                # Attempt push (non-blocking)
+                subprocess.run(
+                    ["git", "-C", portal_dir, "push"],
+                    capture_output=True, timeout=10
+                )
+        except Exception:
+            pass  # git ops are best-effort, never block the sync
+
+
 
 
 if __name__ == "__main__":

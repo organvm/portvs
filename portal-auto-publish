@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+"""portal-auto-publish — scan session artifacts and publish durable nodes to outbox.
+
+Runs as a SessionEnd hook. Detects newly-created plan files, memory observations,
+and closeout summaries, converts them to graph nodes, and publishes to the
+Claude outbox.
+
+Usage:
+  portal-auto-publish [--dry-run]
+"""
+
+import json
+import os
+import sys
+import glob
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+
+HOME = Path.home()
+PORTAL_DIR = HOME / "_portal"
+OUTBOX_DIR = HOME / ".claude" / "portal-out"
+PLANS_DIR = HOME / ".claude" / "plans"
+MEMORY_DIR = HOME / ".claude" / "projects" / "-Users-4jp" / "memory"
+WINDOW_HOURS = 4  # session-scoped, not day-scoped
+
+COUNTER_FILE = PORTAL_DIR / ".portal-counter.json"
+
+
+def next_id(prefix: str, dry_run: bool = False) -> str:
+    """Generate next sequential ID for a domain prefix."""
+    counter = {}
+    if COUNTER_FILE.exists():
+        try:
+            counter = json.loads(open(COUNTER_FILE).read())
+        except (json.JSONDecodeError, FileNotFoundError):
+            pass
+    # Also scan existing graph to avoid ID collisions
+    graph_ids = set()
+    graph_file = PORTAL_DIR / "graph.jsonl"
+    if graph_file.exists():
+        for line in open(graph_file):
+            try:
+                node = json.loads(line.strip())
+                graph_ids.add(node.get("id", ""))
+            except json.JSONDecodeError:
+                pass
+    # Find highest existing ID for this prefix
+    max_n = counter.get(prefix, 0)
+    for gid in graph_ids:
+        if gid.startswith(f"{prefix}-"):
+            try:
+                n = int(gid.split("-")[-1])
+                max_n = max(max_n, n)
+            except ValueError:
+                pass
+    n = max_n + 1
+    counter[prefix] = n
+    if not dry_run:
+        with open(COUNTER_FILE, "w") as f:
+            json.dump(counter, f, indent=2)
+    return f"{prefix}-{n:03d}"
+
+
+def load_graph_ids() -> set[str]:
+    """Load existing graph node IDs for dedup."""
+    ids = set()
+    graph_file = PORTAL_DIR / "graph.jsonl"
+    if graph_file.exists():
+        for line in open(graph_file):
+            try:
+                ids.add(json.loads(line.strip()).get("id", ""))
+            except json.JSONDecodeError:
+                pass
+    return ids
+
+
+def scan_plans(dry_run: bool = False) -> list[dict]:
+    """Find plan files created in the session window. Returns nodes to publish."""
+    nodes = []
+    existing_ids = load_graph_ids()
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=WINDOW_HOURS)
+    if not PLANS_DIR.exists():
+        return nodes
+    for f in sorted(PLANS_DIR.glob("*.md")):
+        mtime = datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc)
+        if mtime < cutoff:
+            continue
+        if f.name == "INDEX.md":
+            continue
+        # Skip if already in graph
+        content = f.read_text()[:500].strip()
+        if not content:
+            continue
+        title = f.stem
+        # Check if a plan with this title/content already exists
+        already_published = False
+        for line in open(PORTAL_DIR / "graph.jsonl"):
+            try:
+                node = json.loads(line.strip())
+                if node.get("domain") == "plan" and title in node.get("content", ""):
+                    already_published = True
+                    break
+            except json.JSONDecodeError:
+                pass
+        if already_published:
+            continue
+        nodes.append({
+            "id": next_id("PLAN", dry_run),
+            "phase": "draft",
+            "domain": "plan",
+            "version": 1,
+            "author": "claude",
+            "confidence": 0.8,
+            "scope": "global",
+            "created": mtime.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "modified": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "content": f"{title}: {content}",
+            "tags": ["auto-published"],
+        })
+    return nodes
+
+
+def scan_memory(dry_run: bool = False) -> list[dict]:
+    """Find memory files created in the session window."""
+    nodes = []
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=WINDOW_HOURS)
+    if not MEMORY_DIR.exists():
+        return nodes
+    for f in sorted(MEMORY_DIR.glob("*.md")):
+        mtime = datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc)
+        if mtime < cutoff:
+            continue
+        if f.name in ("MEMORY.md", "INDEX.md"):
+            continue
+        content = f.read_text()[:500].strip()
+        if not content:
+            continue
+        # Skip if this memory filename already in graph
+        already_published = False
+        for line in open(PORTAL_DIR / "graph.jsonl"):
+            try:
+                node = json.loads(line.strip())
+                if node.get("domain") == "memory" and f.name in node.get("content", ""):
+                    already_published = True
+                    break
+            except json.JSONDecodeError:
+                pass
+        if already_published:
+            continue
+        nodes.append({
+            "id": next_id("MEM", dry_run),
+            "phase": "draft",
+            "domain": "memory",
+            "version": 1,
+            "author": "claude",
+            "confidence": 0.8,
+            "scope": "global",
+            "created": mtime.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "modified": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "content": content,
+            "tags": ["auto-published"],
+        })
+    return nodes
+
+
+def publish_nodes(nodes: list[dict], dry_run: bool = False):
+    """Write nodes to the outbox."""
+    if not nodes:
+        return
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    outfile = OUTBOX_DIR / f"session-{today}.jsonl"
+    OUTBOX_DIR.mkdir(parents=True, exist_ok=True)
+
+    if dry_run:
+        print(f"DRY-RUN: would publish {len(nodes)} nodes:")
+        for node in nodes:
+            print(f"  {node['id']}: {node['content'][:80]}")
+        return
+
+    with open(outfile, "a") as f:
+        for node in nodes:
+            f.write(json.dumps(node, ensure_ascii=False) + "\n")
+    print(f"PUBLISHED: {len(nodes)} nodes → {outfile}")
+
+
+def main():
+    dry_run = "--dry-run" in sys.argv
+
+    plans = scan_plans(dry_run)
+    memories = scan_memory(dry_run)
+    nodes = plans + memories
+
+    if not nodes:
+        print("portal-auto-publish: no new artifacts in session window")
+        return
+
+    publish_nodes(nodes, dry_run)
+
+    if not dry_run:
+        # Run portal-sync to aggregate
+        os.system(f"python3 {PORTAL_DIR}/portal-sync 2>/dev/null")
+
+
+if __name__ == "__main__":
+    main()
