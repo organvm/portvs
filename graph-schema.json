@@ -18,7 +18,7 @@
     "domain": {
       "type": "string",
       "enum": ["governance", "memory", "plan", "irf", "atom", "pipeline", "convention", "skill", "config", "decision"],
-      "description": "What kind of node this is. Domain is emergent from phase position, not a separate taxonomy. A plan at phase=done is a record. An atom at phase=accepted is work."
+      "description": "What kind of node this is. Active domains: governance, memory, plan, irf, convention, decision. Aspirational: atom, pipeline, skill, config (not yet migrated from legacy registries)."
     },
     "version": {
       "type": "integer",
