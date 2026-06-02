@@ -1,0 +1,860 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║           COMPLETE ORGANVM ENTERPRISE FOLDER HIERARCHY                        ║
+║                       Enterprise: meta-organvm                                ║
+║                      8 Organizations × 35+ Repositories                       ║
+║                          Generated: 2026-05-18                                ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+🏢 ENTERPRISE ROOT: meta-organvm
+https://github.com/enterprises/meta-organvm/organizations
+
+═══════════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION 1: meta-organvm (7 Repositories)
+═══════════════════════════════════════════════════════════════════════════════════
+
+  📁 meta-organvm/.github
+  ─────────────────────────────────────────────────────────────────────
+    ├── ISSUE_TEMPLATE/
+    ├── PULL_REQUEST_TEMPLATE/
+    ├── dependabot/
+    ├── profile/
+    ├── scripts/
+    ├── workflows/
+    ├── workflow-templates/
+    └── ...
+
+  📁 meta-organvm/meta-organvm--superproject ⭐ [KEY: Admin Hub]
+  ─────────────────────────────────────────────────────────────────────
+    ├── .claude/
+    │   └── (Claude local memory)
+    ├── .sops/
+    │   └── (Secrets operations)
+    ├── docs/
+    │   ├── birth-inventory/
+    │   ├── operations/
+    │   ├── superpowers/
+    │   │   ├── plans/
+    │   │   └── specs/
+    │   └── ...
+    ├── materia-collider/
+    ├── organvm-corpvs-testamentvm/
+    │   └── data/
+    │       └── atoms/
+    ├── praxis-perpetua/
+    ├── schema-definitions/
+    ├── stakeholder-portal/
+    ├── system-dashboard/
+    ├── tools/
+    │   ├── naming-validator/
+    │   └── verification-fixtures/
+    │       └── workspace/
+    │           ├── meta-organvm/
+    │           ├── organvm-i-theoria/
+    │           ├── organvm-ii-poiesis/
+    │           ├── organvm-iii-ergon/
+    │           ├── organvm-iv-taxis/
+    │           ├── organvm-v-logos/
+    │           ├── organvm-vi-koinonia/
+    │           └── organvm-vii-kerygma/
+    └── post-flood/
+
+  📁 meta-organvm/meta-organvm.github.io
+  ─────────────────────────────────────────────────────────────────────
+    └── (GitHub Pages site)
+
+  📁 meta-organvm/organvm-scrutator
+  ─────────────────────────────────────────────────────────────────────
+    ├── src/
+    ├── tests/
+    └── docs/
+
+  📁 meta-organvm/persona-fleet
+  ─────────────────────────────────────────────────────────────────────
+    ├── src/
+    │   ├── agents/
+    │   ├── config/
+    │   └── templates/
+    └── ...
+
+  📁 meta-organvm/digital-income-organism-inquiry
+  ─────────────────────────────────────────────────────────────────────
+    ├── docs/
+    ├── research/
+    └── specs/
+
+  📁 meta-organvm/_agent-health
+  ─────────────────────────────────────────────────────────────────────
+    ├── dashboards/
+    ├── logs/
+    └── metrics/
+
+═══════════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION 2: organvm-i-theoria [🧠 THEORIA — KNOWLEDGE/THEORY]
+                   (29 Repositories — Knowledge Synthesis Layer)
+═══════════════════════════════════════════════════════════════════════════════════
+
+  📁 organvm-i-theoria/.github
+  ─────────────────────────────────────────────────────────────────────
+    ├── docs/
+    │   ├── _data/
+    │   ├── _includes/
+    │   ├── _layouts/
+    │   ├── .github/
+    │   │   ├── project-templates/
+    │   │   └── workflows/
+    │   ├── analysis/
+    │   ├── api/
+    │   │   └── v1.2.0/
+    │   ├── architecture/
+    │   ├── archive/
+    │   │   ├── deployment/
+    │   │   ├── github-projects/
+    │   │   ├── monitoring/
+    │   │   └── reports/
+    │   ├── assets/
+    │   │   └── images/
+    │   ├── audits/
+    │   ├── automation/
+    │   ├── directory/
+    │   ├── getting-started/
+    │   ├── governance/
+    │   ├── guides/
+    │   │   └── path/
+    │   │       └── to/
+    │   │           └── (relative paths)
+    │   ├── reference/
+    │   │   └── docs/
+    │   ├── reference-pdfs/
+    │   ├── registry/
+    │   ├── reports/
+    │   │   └── metrics/
+    │   │       └── health/
+    │   ├── runbooks/
+    │   ├── site/
+    │   │   └── _layouts/
+    │   ├── standards/
+    │   ├── status/
+    │   ├── templates/
+    │   ├── workflow-templates/
+    │   └── workflows/
+    ├── profile/
+    └── src/
+        └── ai_framework/
+
+  📁 organvm-i-theoria/organvm-i-theoria--superproject ⭐ [Knowledge Synthesis]
+  ─────────────────────────────────────────────────────────────────────
+    ├── auto-revision-epistemic-engine/
+    ├── call-function--ontological/
+    ├── cognitive-archaelogy-tribunal/
+    ├── linguistic-atomization-framework/
+    ├── my-knowledge-base/
+    ├── narratological-algorithmic-lenses/
+    ├── nexus--babel-alexandria/
+    ├── recursive-engine--generative-entity/
+    ├── sema-metra--alchemica-mundi/
+    └── studium-generale/
+
+  📁 organvm-i-theoria/organvm-corpvs-testamentvm ⭐⭐ [CRITICAL: IRF + Registry]
+  ─────────────────────────────────────────────────────────────────────
+    ├── INST-INDEX-RERUM-FACIENDARUM.md [Master Plan Index]
+    ├── data/
+    │   ├── prompt-registry/
+    │   │   ├── prompt-atoms.json [ATM-XXXXXX]
+    │   │   ├── prompt-atoms-schema.json
+    │   │   └── pipeline/
+    │   ├── soak-test/
+    │   └── atoms/
+    │       └── (individual atom stores)
+    └── essays/
+        └── (research documentation)
+
+  📁 organvm-i-theoria/prompt-corpvs ⭐ [Prompt Framework]
+  ─────────────────────────────────────────────────────────────────────
+    ├── atoms/
+    ├── frameworks/
+    ├── registry/
+    └── docs/
+
+  📁 organvm-i-theoria/4444J99.github.io
+  ─────────────────────────────────────────────────────────────────────
+    └── (GitHub Pages)
+
+  📁 organvm-i-theoria/atomic-substrata [Atomic Knowledge]
+  ─────────────────────────────────────────────────────────────────────
+    ├── data/
+    │   ├── benchmark/
+    │   ├── gold/
+    │   ├── import_samples/
+    │   │   ├── derivative_analytical_atoms/
+    │   │   ├── primary_atoms/
+    │   │   └── source_evidence/
+    │   ├── projections/
+    ├── docs/
+    │   ├── 00_meta/
+    │   ├── 01_governance/
+    │   ├── 02_architecture/
+    │   ├── 03_schemas/
+    │   ├── 04_refinery/
+    │   ├── 05_retrieval_assembly/
+    │   ├── 06_interface_portal/
+    │   ├── 07_operations/
+    │   ├── 08_evaluation/
+    │   ├── 09_integrity/
+    │   ├── 10_launch/
+    │   ├── 11_implementation/
+    │   ├── 12_seed_content/
+    │   └── 13_branch_excavations/
+    ├── ecosystem/
+    │   └── pillar-dna/
+    ├── k8s/
+    ├── manifests/
+    ├── prompts/
+    ├── scripts/
+    │   ├── academic/
+    │   └── academic_mcp/
+    └── source_artifacts/
+        ├── atomic_corpus_variants/
+        │   ├── chat_pairs/
+        │   │   ├── chatgpt-atomic-knowledge-assembler/
+        │   │   ├── chatgpt-branch-atomic-knowledge-assembler/
+        │   │   └── chatgpt-branch-atomic-knowledge-assembler-1/
+        │   ├── normalized/
+        │   └── raw/
+        ├── chat_pairs/
+        └── normalized/
+
+  📁 organvm-i-theoria/organvm-i-theoria.github.io
+  ─────────────────────────────────────────────────────────────────────
+    └── (GitHub Pages)
+
+  📁 organvm-i-theoria/hierarchia-mundi
+  ─────────────────────────────────────────────────────────────────────
+    ├── docs/
+    └── src/
+
+  📁 organvm-i-theoria/styx-behavioral-economics-theory
+  ─────────────────────────────────────────────────────────────────────
+    ├── theory/
+    ├── models/
+    └── proofs/
+
+  📁 organvm-i-theoria/scale-threshold-emergence
+  ─────────────────────────────────────────────────────────────────────
+    ├── research/
+    ├── data/
+    └── simulations/
+
+  📁 organvm-i-theoria/vigiles-aeternae--corpus-mythicum
+  ─────────────────────────────────────────────────────────────────────
+    ├── corpus/
+    ├── analysis/
+    └── mappings/
+
+  📁 organvm-i-theoria/conversation-corpus-engine
+  ─────────────────────────────────────────────────────────────────────
+    ├── src/
+    ├── data/
+    └── models/
+
+  📁 organvm-i-theoria/rules-system-bound
+  ─────────────────────────────────────────────────────────────────────
+    ├── rules/
+    ├── engine/
+    └── tests/
+
+  📁 organvm-i-theoria/mesh
+  ─────────────────────────────────────────────────────────────────────
+    ├── network/
+    └── topology/
+
+  📁 organvm-i-theoria/growth-auditor
+  ─────────────────────────────────────────────────────────────────────
+    ├── audits/
+    ├── metrics/
+    └── reports/
+
+  📁 organvm-i-theoria/sovereign--ground
+  ─────────────────────────────────────────────────────────────────────
+    ├── research/
+    └── docs/
+
+  📁 organvm-i-theoria/carrier-wave--zeitgeist-thesis
+  ─────────────────────────────────────────────────────────────────────
+    ├── thesis/
+    └── proofs/
+
+  📁 organvm-i-theoria/studium-generale
+  ─────────────────────────────────────────────────────────────────────
+    ├── coursework/
+    ├── seminars/
+    └── research/
+
+  📁 organvm-i-theoria/my-knowledge-base
+  ─────────────────────────────────────────────────────────────────────
+    ├── entries/
+    ├── indices/
+    └── cross-refs/
+
+  [+8 more repos in organvm-i-theoria...]
+
+═══════════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION 3: organvm-ii-poiesis [🎨 POIESIS — CREATION/MAKING]
+                   (6 Repositories — Content Generation & Art Layer)
+═══════════════════════════════════════════════════════════════════════════════════
+
+  📁 organvm-ii-poiesis/.github
+  ─────────────────────────────────────────────────────────────────────
+    ├── ISSUE_TEMPLATE/
+    ├── PULL_REQUEST_TEMPLATE/
+    ├── profile/
+    └── workflow-templates/
+
+  📁 organvm-ii-poiesis/organvm-ii-poiesis--superproject ⭐ [Creation Engine]
+  ─────────────────────────────────────────────────────────────────────
+    ├── a-i-council--coliseum/
+    ├── a-mavs-olevm/
+    ├── academic-publication/
+    ├── alchemical-synthesizer/
+    ├── archive-past-works/
+    ├── art-from--auto-revision-epistemic-engine/
+    ├── art-from--narratological-algorithmic-lenses/
+    ├── artist-toolkit-and-templates/
+    ├── audio-synthesis-bridge/
+    ├── case-studies-methodology/
+    ├── chthon-oneiros/
+    ├── client-sdk/
+    ├── core-engine/ ⭐ [Poiesis Core]
+    │   ├── src/
+    │   ├── lib/
+    │   └── tests/
+    ├── docs/
+    │   ├── api/
+    │   ├── guides/
+    │   └── tutorials/
+    ├── example-ai-collaboration/
+    ├── example-choreographic-interface/
+    ├── example-generative-music/
+    ├── example-generative-visual/
+    ├── example-interactive-installation/
+    ├── example-theatre-dialogue/
+    ├── ivi374ivi027-05/
+    ├── krypto-velamen/
+    ├── learning-resources/
+    ├── life-betterment-simulation/
+    ├── MET4/
+    ├── metasystem-master/ ⭐⭐ [AI Generation Controller]
+    │   ├── src/
+    │   │   ├── core/
+    │   │   ├── agents/
+    │   │   ├── pipelines/
+    │   │   └── config/
+    │   ├── tests/
+    │   ├── docs/
+    │   └── config/
+    ├── performance-sdk/
+    ├── shared-remembrance-gateway/
+    └── showcase-portfolio/
+
+  📁 organvm-ii-poiesis/organvm-ii-poiesis.github.io
+  ─────────────────────────────────────────────────────────────────────
+    └── (GitHub Pages)
+
+  📁 organvm-ii-poiesis/object-lessons [Educational Platform]
+  ─────────────────────────────────────────────────────────────────────
+    ├── public/
+    │   └── images/
+    │       └── og/
+    ├── scripts/
+    ├── src/
+    │   ├── components/
+    │   │   ├── astro/
+    │   │   └── react/
+    │   ├── content/
+    │   │   ├── episodes/
+    │   │   ├── essays/
+    │   │   └── objects/
+    │   ├── data/
+    │   ├── layouts/
+    │   ├── lib/
+    │   ├── pages/
+    │   │   ├── api/
+    │   │   │   ├── collaborator/
+    │   │   │   └── submissions/
+    │   │   ├── episodes/
+    │   │   ├── essays/
+    │   │   └── objects/
+    │   └── styles/
+
+  📁 organvm-ii-poiesis/styx-behavioral-art [Art Theory]
+  ─────────────────────────────────────────────────────────────────────
+    ├── concepts/
+    ├── docs/
+    │   └── pitch/
+    └── ecosystem/
+        └── pillar-dna/
+
+  📁 organvm-ii-poiesis/vigiles-aeternae--theatrum-mundi [Theatre/World]
+  ─────────────────────────────────────────────────────────────────────
+    ├── art/
+    ├── bestiary/
+    ├── characters/
+    │   ├── orders/
+    │   └── regimes/
+    ├── narrative/
+    ├── rooms/
+    │   ├── liminal/
+    │   ├── primary/
+    │   └── streets/
+    ├── rpg/
+    ├── sound/
+    └── worldbuilding/
+
+═══════════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION 4: organvm-iii-ergon [⚙️ ERGON — WORK/ACTION/PRODUCT]
+                   (7 Repositories — Production/Deployment Layer)
+═══════════════════════════════════════════════════════════════════════════════════
+
+  📁 organvm-iii-ergon/.github
+  ─────────────────────────────────────────────────────────────────────
+    ├── profile/
+    └── workflows/
+
+  📁 organvm-iii-ergon/organvm-iii-ergon--superproject ⭐ [Product Layer]
+  ─────────────────────────────────────────────────────────────────────
+    ├── .github/
+    ├── classroom-rpg-aetheria/
+    ├── commerce--meta/
+    ├── content-engine--asset-amplifier/
+    ├── docs/
+    │   └── contributions/
+    ├── life-my--midst--in/
+    ├── public-record-data-scrapper/
+    ├── sign-signal--voice-synth/
+    ├── sovereign-systems--elevate-align/
+    └── the-actual-news/
+
+  📁 organvm-iii-ergon/organvm-iii-ergon.github.io
+  ─────────────────────────────────────────────────────────────────────
+    └── (GitHub Pages)
+
+  📁 organvm-iii-ergon/content-engine--asset-amplifier ⭐⭐ [Social Content Platform]
+  ─────────────────────────────────────────────────────────────────────
+    ├── apps/
+    │   ├── api/
+    │   │   └── src/
+    │   │       ├── plugins/
+    │   │       └── routes/
+    │   ├── cli/
+    │   │   └── src/
+    │   ├── dashboard/
+    │   │   └── src/
+    │   │       ├── pages/
+    │   │       └── services/
+    ├── docs/
+    │   ├── genesis-project/
+    │   │   ├── conversations/
+    │   │   ├── files/
+    │   │   └── metadata/
+    │   └── superpowers/
+    │       └── plans/
+    ├── infra/
+    │   ├── docker/
+    │   ├── scripts/
+    │   └── temporal/
+    │       ├── activities/
+    │       └── workflows/
+    ├── packages/
+    │   ├── config/
+    │   │   └── src/
+    │   ├── db/
+    │   │   └── src/
+    │   │       ├── migrations/
+    │   │       └── schema/
+    │   ├── domain/
+    │   │   └── src/
+    │   ├── logger/
+    │   │   └── src/
+    │   ├── queue/
+    │   │   └── src/
+    │   ├── storage/
+    │   │   └── src/
+    ├── pitch-deck/
+    ├── services/
+    │   ├── analytics/
+    │   │   └── src/
+    │   ├── asset-ingestion/
+    │   │   └── src/
+    │   ├── audience-engine/
+    │   ├── content-generation/
+    │   │   └── src/
+    │   ├── design-resizer/
+    │   │   └── src/
+    │   ├── fragment-extraction/
+    │   │   └── src/
+    │   ├── natural-center/
+    │   │   └── src/
+    │   ├── platform-adapter/
+    │   │   └── src/
+    │   ├── scheduler/
+    │   │   └── src/
+    │   └── scoring/
+    └── [+5 more service dirs...]
+
+  📁 organvm-iii-ergon/sign-signal--voice-synth ⭐ [Dialogue Sequencer]
+  ─────────────────────────────────────────────────────────────────────
+    ├── apps/
+    │   ├── api/
+    │   │   └── src/
+    │   ├── voice-bridge/
+    │   ├── web/
+    │   │   └── src/
+    │   │       └── app/
+    ├── packages/
+    │   ├── db/
+    │   │   └── prisma/
+    │   ├── shared/
+    │   │   └── src/
+    ├── specs/
+    │   └── layer-1-dialogue-loop-tracker/
+    │       └── contracts/
+
+  📁 organvm-iii-ergon/sovereign-systems--elevate-align [Spiral Methodology]
+  ─────────────────────────────────────────────────────────────────────
+    ├── docs/
+    │   ├── archive/
+    │   │   ├── 2026-04/
+    │   │   ├── 2026-05/
+    │   │   ├── extracted/
+    │   │   │   ├── atoms/
+    │   │   │   ├── business/
+    │   │   │   ├── concepts/
+    │   │   │   ├── health/
+    │   │   │   ├── mindset/
+    │   │   │   ├── time-astro/
+    │   │   │   └── water/
+    │   │   └── source-bundle/
+    │   ├── spiral/
+    │   │   ├── business/
+    │   │   ├── concepts-to-add-in/
+    │   │   ├── health/
+    │   │   ├── mindset/
+    │   │   ├── time-astro-human-design/
+    │   │   └── water/
+    │   ├── strikes/
+    │   │   ├── verification/
+    │   │   │   ├── claude-blind/
+    │   │   │   └── gemini/
+    │   │   ├── audit/
+    │   │   ├── client-decisions/
+    │   │   ├── client-deliverables/
+    │   │   ├── client-pdfs/
+    │   │   ├── 2026-05-16-maddie-imessage-screenshots/
+    │   │   ├── critiques/
+    │   │   ├── decisions/
+    │   │   ├── design-proposals/
+    │   │   ├── internal/
+    │   │   ├── logos/
+    │   │   ├── maddie/
+    │   │   │   ├── 2026-05-16-branch-html-exports/
+    │   │   │   └── _hold-messages/
+    │   │   ├── chat-exports/
+    │   │   ├── chat-screenshots/
+    │   │   ├── manifests/
+    │   │   ├── process-extraction/
+    │   │   ├── products/
+    │   │   ├── proofs/
+    │   │   ├── nav-variants/
+    │   │   │   ├── quiz-flow/
+    │   │   │   └── spiral-vessel-variants/
+    │   │   ├── reports/
+    │   │   │   └── 2026-04-04/
+    │   │   ├── runbooks/
+    │   │   ├── sessions/
+    │   │   ├── social-content-calendar/
+    │   │   ├── sops/
+    │   │   ├── tracking/
+    │   │   └── spiral-experiments/
+    │   │       └── 2026-05-16-confluence-apophatic/
+    │   ├── superpowers/
+    │   │   ├── intakes/
+    │   │   ├── plans/
+    │   │   └── specs/
+    │   └── [+26 more dirs...]
+
+  📁 organvm-iii-ergon/sovereign-systems--layer-above-hokage ⭐⭐ [Research Atlas]
+  ─────────────────────────────────────────────────────────────────────
+    ├── phase-1_full-stack/
+    ├── phase-1_lean-mvp/
+    ├── phase-2_landing-page/
+    ├── phase-2_pitch-deck/
+    ├── phase-2_sales-one-pager/
+    ├── phase-3_research-atlas/
+    ├── pillars/
+    │   ├── algorithmic-interface/
+    │   ├── causal-inference/
+    │   ├── canonical-papers/
+    │   ├── data/
+    │   │   └── schemas/
+    │   ├── unit-economics/
+    │   └── source-list/
+    ├── templates/
+    ├── sops/
+    ├── vacuum-detector/
+    └── phase-4_dissertation/
+
+  �� organvm-iii-ergon/specvla-ergon--avditor-mvndi [Website Audit Tool]
+  ─────────────────────────────────────────────────────────────────────
+    ├── docs/
+    │   ├── architecture/
+    │   └── superpowers/
+    │       └── specs/
+    ├── e2e/
+    ├── src/
+    │   └── app/
+    │       ├── about/
+    │       ├── admin/
+    │       │   ├── api/
+    │       │   ├── admin/
+    │       │   │   ├── actions/
+    │       │   │   ├── analytics/
+    │       │   │   ├── config/
+    │       │   │   ├── schedules/
+    │       │   ├── users/
+    │       │   ├── audit/
+    │       │   ├── feedback/
+    │       │   ├── stream/
+    │       ├── auth/
+    │       │   └── [...nextauth]/
+    │       ├── chat/
+    │       ├── checkout/
+    │       ├── cron/
+    │       ├── health/
+    │       ├── history/
+    │       ├── leads/
+    │       ├── og/
+    │       ├── pdf/
+    │       ├── settings/
+    │       │   ├── branding/
+    │       │   ├── data/
+    │       │   ├── export/
+    │       │   └── forget/
+    │       ├── integrations/
+    │       │   ├── schedules/
+    │       │   ├── share/
+    │       │   └── [id]/
+    │       ├── stats/
+    │       ├── trends/
+    │       ├── subscription/
+    │       ├── teams/
+    │       │   ├── [id]/
+    │       │   └── members/
+    │       ├── v1/
+    │       │   ├── analyze/
+    │       │   ├── webhooks/
+    │       │   │   └── stripe/
+    │       │   ├── compare/
+    │       │   └── results/
+    │       ├── docs/
+    │       │   ├── examples/
+    │       │   ├── history/
+    │       │   ├── pricing/
+    │       │   ├── results/
+    │       │   ├── settings/
+    │       │   ├── schedules/
+    │       │   ├── share/
+    │       │   └── [id]/
+    │       ├── teams/
+    │       │   └── [id]/
+    │       └── [+8 more dirs...]
+
+═══════════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION 4: organvm-iv-taxis [🗂️ TAXIS — ORDER/ARRANGEMENT]
+                   (4 Repositories — Orchestration & Governance)
+═══════════════════════════════════════════════════════════════════════════════════
+
+  📁 organvm-iv-taxis/.github
+  ─────────────────────────────────────────────────────────────────────
+    └── profile/
+
+  📁 organvm-iv-taxis/organvm-iv-taxis--superproject ⭐ [Orchestration Hub]
+  ─────────────────────────────────────────────────────────────────────
+    ├── .claude/
+    ├── .github/
+    ├── research/
+    │   ├── archive/
+    │   │   ├── 2026-03-08-gemini-reports/
+    │   │   ├── cloudbase-mcp/
+    │   │   └── mcp-servers/
+    └── tools/
+
+  📁 organvm-iv-taxis/organvm-iv-taxis.github.io
+  ─────────────────────────────────────────────────────────────────────
+    └── (GitHub Pages)
+
+  📁 organvm-iv-taxis/org-dotgithub [Config Sync]
+  ─────────────────────────────────────────────────────────────────────
+    └── profile/
+
+═══════════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION 5: organvm-v-logos [💬 LOGOS — WORD/REASON]
+                   (3 Repositories — Language & Logic)
+═══════════════════════════════════════════════════════════════════════════════════
+
+  📁 organvm-v-logos/.github
+  ─────────────────────────────────────────────────────────────────────
+    ├── profile/
+    └── workflows/
+
+  📁 organvm-v-logos/organvm-v-logos--superproject ⭐
+  ─────────────────────────────────────────────────────────────────────
+    ├── docs/
+    └── tools/
+
+  📁 organvm-v-logos/organvm-v-logos.github.io
+  ─────────────────────────────────────────────────────────────────────
+    └── (GitHub Pages)
+
+═══════════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION 6: organvm-vi-koinonia [🤝 KOINONIA — COMMUNITY/FELLOWSHIP]
+                   (3 Repositories — Collective/Fellowship)
+═══════════════════════════════════════════════════════════════════════════════════
+
+  📁 organvm-vi-koinonia/.github
+  ─────────────────────────────────────────────────────────────────────
+    └── profile/
+
+  �� organvm-vi-koinonia/organvm-vi-koinonia--superproject ⭐
+  ─────────────────────────────────────────────────────────────────────
+    └── (minimal structure)
+
+  📁 organvm-vi-koinonia/organvm-vi-koinonia.github.io
+  ─────────────────────────────────────────────────────────────────────
+    └── (GitHub Pages)
+
+═══════════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION 7: organvm-vii-kerygma [📢 KERYGMA — PROCLAMATION/MESSAGE]
+                   (3 Repositories — Communication & Broadcast)
+═══════════════════════════════════════════════════════════════════════════════════
+
+  📁 organvm-vii-kerygma/.github
+  ─────────────────────────────────────────────────────────────────────
+    ├── docs/
+    │   ├── adr/
+    │   ├── cross-organ-workflows/
+    │   └── plans/
+    ├── organvm-theme/
+    │   ├── assets/
+    │   │   ├── css/
+    │   │   └── js/
+    │   └── partials/
+    ├── profile/
+    ├── scripts/
+    └── tests/
+
+  📁 organvm-vii-kerygma/organvm-vii-kerygma--superproject ⭐
+  ─────────────────────────────────────────────────────────────────────
+    └── (minimal structure)
+
+  📁 organvm-vii-kerygma/organvm-vii-kerygma.github.io
+  ─────────────────────────────────────────────────────────────────────
+    └── (GitHub Pages)
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+🎯 CRITICAL NODES SUMMARY (⭐⭐ HIGHEST PRIORITY)
+
+1. ⭐⭐ organvm-corpvs-testamentvm
+   Location: organvm-i-theoria/organvm-corpvs-testamentvm
+   Purpose: MASTER TASK REGISTRY + ATOM LIBRARY
+   Key Files:
+     └── INST-INDEX-RERUM-FACIENDARUM.md [Master IRF Index]
+     └── data/prompt-registry/prompt-atoms.json [ATM-XXXXXX Registry]
+   Status: CRITICAL — All task definition & prompt atoms tracked here
+
+2. ⭐⭐ metasystem-master
+   Location: organvm-ii-poiesis/organvm-ii-poiesis--superproject/metasystem-master
+   Purpose: AI GENERATION CONTROLLER
+   Key Dirs:
+     ├── src/core/ [Execution engine]
+     ├── src/agents/ [Agent definitions]
+     ├── src/pipelines/ [Processing pipelines]
+     └── src/config/ [Configuration]
+   Status: ACTIVE — Drives all content generation
+
+3. ⭐⭐ content-engine--asset-amplifier
+   Location: organvm-iii-ergon/content-engine--asset-amplifier
+   Purpose: DEPLOYED PRODUCT — Social Content Repurposing
+   Key Structures:
+     ├── apps/ [API, CLI, Dashboard]
+     ├── packages/ [Shared libs: db, domain, logger, queue, storage]
+     ├── services/ [Asset ingestion, audience engine, content generation]
+     └── infra/ [Docker, Temporal workflows]
+   Status: PRODUCTION — Live service
+
+4. ⭐⭐ sovereign-systems--layer-above-hokage
+   Location: organvm-iii-ergon/sovereign-systems--layer-above-hokage
+   Purpose: RESEARCH INFRASTRUCTURE & METHODOLOGY
+   Key Phases:
+     ├── phase-1_lean-mvp/ [Prototype]
+     ├── phase-2_landing-page/ [Marketing]
+     ├── phase-3_research-atlas/ [CURRENT]
+     ├── phase-4_dissertation/ [Academic]
+   Status: PHASE 3 ACTIVE
+
+5. ⭐⭐ meta-organvm--superproject
+   Location: meta-organvm/meta-organvm--superproject
+   Purpose: ENTERPRISE ADMIN HUB
+   Key Content:
+     ├── docs/superpowers/ [System capabilities registry]
+     ├── tools/verification-fixtures/ [Test configurations]
+     └── schema-definitions/ [Data schemas]
+   Status: CENTRAL GOVERNANCE
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+📊 STRUCTURE STATISTICS
+
+Enterprise:        1 (meta-organvm)
+Organizations:     8 (theoria, poiesis, ergon, taxis, logos, koinonia, kerygma, meta)
+Total Repos:       35+
+  ├── Superprojects:  8 (submodule orchestrators)
+  ├── Standalones:    20+
+  └── GitHub Pages:   8
+
+Total Directories: 200+ (estimated across all repos)
+  ├── Level 1 (Root):     ~35 (one per repo)
+  ├── Level 2 (Org):      ~80 (submodules in superprojects)
+  ├── Level 3 (Modules):  ~120+ (src/, services/, docs/, etc.)
+  └── Level 4-5 (Deep):   ~200+ (nested project structures)
+
+Knowledge Hierarchy:
+  Level 1 (Atoms):      organvm-i-theoria → IRF + atom registry
+  Level 2 (Creation):   organvm-ii-poiesis → generators, frameworks
+  Level 3 (Products):   organvm-iii-ergon → deployed tools, services
+  Level 4 (Order):      organvm-iv-taxis → orchestration, coordination
+  Levels 5-8 (Meta):    remaining orgs → governance, communication
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+🔗 CROSS-REPO REFERENCES
+
+meta-organvm--superproject contains fixtures that reference all 8 orgs:
+  └── tools/verification-fixtures/workspace/
+      ├── meta-organvm/
+      ├── organvm-i-theoria/
+      ├── organvm-ii-poiesis/
+      ├── organvm-iii-ergon/
+      ├── organvm-iv-taxis/
+      ├── organvm-v-logos/
+      ├── organvm-vi-koinonia/
+      └── organvm-vii-kerygma/
+
+organvm-corpvs-testamentvm is referenced in multiple repos as the single source
+of truth for prompts, atoms, and task definitions.
+
+═══════════════════════════════════════════════════════════════════════════════════
+Generated: 2026-05-18T23:07:15Z
+End of Complete ORGANVM Folder Hierarchy
+═══════════════════════════════════════════════════════════════════════════════════

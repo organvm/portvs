@@ -1,0 +1,649 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║        ORGANVM ENTERPRISE: COMPLETE ARCHITECTURAL EVOLUTION HISTORY           ║
+║                         Git Architecture Timeline                             ║
+║                     Generated: 2026-05-18T23:20:39.239357Z                  ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION: meta-organvm
+═══════════════════════════════════════════════════════════════════════════════
+
+
+┌─ REPOSITORY: meta-organvm/meta-organvm--superproject
+│  Commits: 418
+│  Range: 2026-02-18 → 2026-04-20
+│
+│  COMMIT HISTORY (recent first):
+│    [2026-04-20] 99877e9 chore: archive S-Intelligence plan (constitutional intellige
+│    [2026-04-20] e680ae5 chore: sync engine + mcp-server + corpus pointers
+│    [2026-04-20] 7f226c0 feat: regenerate corpus graph with expanded concept vocabula
+│    [2026-04-19] 8ae80cb feat: first corpus knowledge graph artifact (118 nodes, 172 
+│    [2026-04-19] af29e75 fix: zettel validator passes all 9 checks (0 errors)
+│    [2026-04-19] ca81446 chore: sync corpus pointer + session state
+│    [2026-04-19] 63a65ad chore: archive session state (S-Elevation + prior session en
+│    [2026-04-19] 3c2c090 chore: archive S-Elevation plan (compiled spec elevation)
+│    [2026-04-18] c7d69ed chore: zettel-index — upgrade 5 compiled specs partial→clean
+│    [2026-04-18] bc10911 docs: elevate TRX-C.04 — remove QA seams, integrate charter 
+│    [2026-04-18] e5d52ed docs: elevate TRX-C.09 — remove 4 QA seams, unify lifecycle 
+│    [2026-04-18] a99c829 docs: elevate TRX-C.07 — remove conversational opening + dir
+│    [2026-04-18] 1369be9 docs: elevate TRX-C.10 — remove opening address + tail offer
+│    [2026-04-18] ecb04e3 docs: elevate TRX-C.02 — remove tail QA artifact
+│    [2026-04-18] 02f5ed9 chore: sync corpus pointer (session continuations + IRF audi
+│    [2026-04-18] e9672e9 chore: sync corpus pointer (fossil record catch-up)
+│    [2026-04-18] 99fa30f chore: sync corpus pointer (prompt registry + fossil record)
+│    [2026-04-18] 51b9feb chore: sync submodule refs (S-audit-close-2026-04-18)
+│    [2026-04-17] 2ae280f chore: sync organvm-engine pointer (test fixes — 20-criterio
+│    [2026-04-16] ce1e895 chore: sync submodule refs (IRF updates + MCP metrics worksp
+│    [2026-04-16] 41ea707 chore: sync submodule ref (Session F — AX-7/8/9, RR-9, inter
+│    [2026-04-15] b428224 chore: sync submodule refs (Session D residual — SYS-065, SY
+│    [2026-04-15] 1a7072b docs: add Session D residual plan (SYS-065 + SYS-067)
+│    [2026-04-15] 829eb40 chore: gitignore session artifacts and update submodule refs
+│    [2026-04-15] b7f5532 chore: sync corpus pointer (IRF session close-out)
+│    [2026-04-15] e005c2a chore: sync corpus pointer (witness hook entry)
+│    [2026-04-15] 1df1436 chore: sync corpus pointer (fossil-record.jsonl testament ev
+│    [2026-04-15] f79860a chore: update submodule refs and add session archive
+│    [2026-04-15] 503b3e4 chore: update submodule refs (engine + corpus)
+│    [2026-04-15] 3ed68e2 chore: update submodule refs, context files, and add contrib
+│
+│  FINAL ARCHITECTURE (HEAD):
+│    ├── docs/
+│    ├── docs/birth-inventory/
+│    ├── docs/operations/
+│    ├── docs/superpowers/
+│    ├── docs/superpowers/plans/
+│    ├── docs/superpowers/specs/
+│    ├── post-flood/
+│    ├── post-flood/.claude/
+│    ├── post-flood/.claude/plans/
+│    ├── post-flood/Commit-Assessment-Summary/
+│    ├── post-flood/Commit-Assessment-Summary/Initial-Assessment/
+│    ├── post-flood/Commit-Assessment-Summary/Ontology-and-Formalization/
+│    ├── post-flood/Commit-Assessment-Summary/Organ-Audit/
+│    ├── post-flood/Commit-Assessment-Summary/Structural-Positioning/
+│    ├── post-flood/Commit-Assessment-Summary/constitutional-governance/
+│    ├── post-flood/Commit-Assessment-Summary/graph-theoretic-models/
+│    ├── post-flood/Commit-Assessment-Summary/implementation-methodology/
+│    ├── post-flood/Top-Down-Refinement-Pipeline/
+│    ├── post-flood/Top-Down-Refinement-Pipeline/Diagnostic-Frameworks/
+│    ├── post-flood/Top-Down-Refinement-Pipeline/Handoff-and-Relay/
+│    ... (80 more directories)
+│
+═══════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION: organvm-i-theoria
+═══════════════════════════════════════════════════════════════════════════════
+
+
+┌─ REPOSITORY: organvm-i-theoria/organvm-i-theoria--superproject
+│  Commits: 33
+│  Range: 2026-02-18 → 2026-04-15
+│
+│  COMMIT HISTORY (recent first):
+│    [2026-04-15] 216ebf7 chore: update submodule refs
+│    [2026-04-15] 88f951c chore: update submodule ref (studium-generale)
+│    [2026-04-15] ce879f0 chore: update submodule refs and context files
+│    [2026-03-24] 96513f4 chore: sync all submodule pointers — context files flushed
+│    [2026-03-24] 46973d9 chore: context sync — refresh auto-generated context files
+│    [2026-03-20] 5630b2c chore: sync all ORGAN-I submodule pointers — context files f
+│    [2026-03-20] 3888e75 chore: sync all submodule pointers + context files
+│    [2026-03-20] 8de1dab chore: sync all submodule pointers + studium-generale archiv
+│    [2026-03-17] a96f85a feat: add studium-generale submodule — SGO internal universi
+│    [2026-03-17] 527d221 Merge branch 'chore/platform-standards-audit' into main
+│    [2026-03-17] 3d16177 onnwards+upwards;
+│    [2026-03-10] 19be00c chore: structural audit — fix nexus collision, register hier
+│    [2026-03-08] 4711a14 chore: sync context files (promotion state propagation)
+│    [2026-03-05] a94228b chore: update submodule pointers after checkpoint
+│    [2026-03-05] e590292 fix: make submodule standards findings warning-level
+│    [2026-03-05] 7a3ce56 chore: add platform standards audit script
+│    [2026-03-04] 87a9c66 chore: merge remote main and checkpoint all local changes
+│    [2026-03-04] 16cfa84 chore: checkpoint remaining local changes
+│    [2026-03-04] 2dc4f1b chore: checkpoint all local changes
+│    [2026-03-04] b5d6fa0 fix: pin checkout action sha in minimal ci
+│    [2026-03-04] e1f7bd4 fix: replace .github submodule with local minimal workflow
+│    [2026-03-04] 28f742b chore: refresh submodule pointers
+│    [2026-03-01] c7a2366 Stage and commit all changes
+│    [2026-02-28] ac04a6c chore: sync submodule pointers after omega advancement sprin
+│    [2026-02-24] 53dba19 fix: update submodule pointers after LFS removal
+│    [2026-02-24] 0ca3fed chore: update a-recursive-root submodule pointer
+│    [2026-02-24] 54c9c13 chore: update all submodule pointers after context file sync
+│    [2026-02-24] 1a7d2bb chore: update CLAUDE.md to superproject structure and sync s
+│    [2026-02-24] 19222b8 fix: correct nexus--babel-alexandria submodule URL (remove t
+│    [2026-02-19] 794d0fb chore: auto-sync context files (CLAUDE, GEMINI, AGENTS) from
+│
+│  FINAL ARCHITECTURE (HEAD):
+│
+
+┌─ REPOSITORY: organvm-i-theoria/organvm-corpvs-testamentvm
+│  Commits: 1
+│  Range: ? → ?
+│
+│  COMMIT HISTORY (recent first):
+│    [?] ? Not Found
+│
+│  FINAL ARCHITECTURE (HEAD):
+│
+
+┌─ REPOSITORY: organvm-i-theoria/atomic-substrata
+│  Commits: 18
+│  Range: 2026-03-13 → 2026-05-13
+│
+│  COMMIT HISTORY (recent first):
+│    [2026-05-13] 5ecf740 docs: linguistic taxonomy v1 schema extension
+│    [2026-04-23] 7f1d585 Add repository standards (editorconfig, gitattributes)
+│    [2026-04-23] 0620b67 feat: prompt atomization pipeline outputs [session 2026-04-2
+│    [2026-04-15] c94ade2 chore: update auto-generated context files
+│    [2026-04-15] de4fad8 feat: add implements field binding to post-flood concepts
+│    [2026-03-14] 068bc28 docs: add AGENTS.md for agentic coding guidelines
+│    [2026-03-14] 88f9725 ci: add pytest-cov and test coverage reporting
+│    [2026-03-14] 568f23a fix: fill empty stubs and add 26 unit tests
+│    [2026-03-14] 80362b4 chore: clean up TODO files and add deployment configs
+│    [2026-03-14] bb6d15c feat: add integration tests, docs website, and semantic embe
+│    [2026-03-14] 7fcea65 feat: implement all remaining uaks skeleton modules
+│    [2026-03-14] f56aae3 feat: implement core uaks modules and add comprehensive test
+│    [2026-03-14] 9f11c72 docs: update README with new features
+│    [2026-03-14] 7a29e10 feat: add assembly engine, graph storage, REST API, and test
+│    [2026-03-14] af69603 feat: add MCP server, CI workflow, and seed atoms
+│    [2026-03-13] ce649b5 feat: add pipeline script, academic API suite, and roadmap
+│    [2026-03-13] 9332fb5 docs: complete 32 placeholder documents with UAKS-specific c
+│    [2026-03-13] d5bea08 Initial commit: atomic-substrata (Atomic Knowledge Assembler
+│
+│  FINAL ARCHITECTURE (HEAD):
+│    ├── data/
+│    ├── data/benchmark/
+│    ├── data/gold/
+│    ├── data/import_samples/
+│    ├── data/import_samples/derivative_analytical_atoms/
+│    ├── data/import_samples/primary_atoms/
+│    ├── data/import_samples/source_evidence/
+│    ├── data/projections/
+│    ├── docs/
+│    ├── docs/00_meta/
+│    ├── docs/01_governance/
+│    ├── docs/02_architecture/
+│    ├── docs/03_schemas/
+│    ├── docs/04_refinery/
+│    ├── docs/05_retrieval_assembly/
+│    ├── docs/06_interface_portal/
+│    ├── docs/07_operations/
+│    ├── docs/08_evaluation/
+│    ├── docs/09_integrity/
+│    ├── docs/10_launch/
+│    ... (45 more directories)
+│
+═══════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION: organvm-ii-poiesis
+═══════════════════════════════════════════════════════════════════════════════
+
+
+┌─ REPOSITORY: organvm-ii-poiesis/organvm-ii-poiesis--superproject
+│  Commits: 18
+│  Range: 2026-02-18 → 2026-03-04
+│
+│  COMMIT HISTORY (recent first):
+│    [2026-03-04] a8d46de chore: checkpoint all local changes
+│    [2026-03-04] 896a7b1 auto-commit at 2026-03-04T13:40:56Z
+│    [2026-03-04] 0817f68 chore: advance submodules after CI workflow fixes
+│    [2026-03-04] 5081ebc chore: update pages-fix submodule refs
+│    [2026-03-04] 02b1a77 chore: update a-mavs submodule for automation fix
+│    [2026-03-04] fb00188 chore: update a-mavs submodule after ci fixes
+│    [2026-03-04] 0b9cfd3 chore: update submodules after workflow fixes
+│    [2026-03-04] fe1d3bd chore: update submodule refs for workflow fixes
+│    [2026-02-28] 53a90d1 chore: sync a-mavs-olevm pointer after Netlify deployment
+│    [2026-02-28] 96a31e7 chore: sync submodule pointers after omega advancement sprin
+│    [2026-02-24] 3e8ed6c chore: update MET4 submodule pointer
+│    [2026-02-24] 8969a5c chore: sync submodule pointers after context file sync and c
+│    [2026-02-24] 8f02a3c docs: improve CLAUDE.md with superproject architecture and c
+│    [2026-02-19] 81a52d0 chore: auto-sync context files (CLAUDE, GEMINI, AGENTS) from
+│    [2026-02-19] 82c01ac chore: auto-sync CLAUDE.md from registry
+│    [2026-02-18] f1bba88 chore: sync organvm-ii-poiesis submodule pointers (19 update
+│    [2026-02-18] 724b02c feat: initialize organvm-ii-poiesis superproject with 31 sub
+│    [2026-02-18] e727938 feat: initialize organvm-ii-poiesis superproject with 31 sub
+│
+│  FINAL ARCHITECTURE (HEAD):
+│
+
+┌─ REPOSITORY: organvm-ii-poiesis/metasystem-master
+│  Commits: 199
+│  Range: 2025-12-10 → 2026-04-29
+│
+│  COMMIT HISTORY (recent first):
+│    [2026-04-29] e695859 feat: substrate elevation — register 3 workspaces (SPEC-024 
+│    [2026-04-23] ea1cd5b Add repository standards (editorconfig, gitattributes)
+│    [2026-04-20] fcd59fe Merge pull request #21 from organvm-ii-poiesis/feat/cla-enfo
+│    [2026-04-20] dadc26d feat: add CLA enforcement via contributor-assistant
+│    [2026-04-15] efb61ce chore: update auto-generated context files
+│    [2026-03-26] b7ca380 docs: context sync refresh — AGENTS.md/GEMINI.md 2026-03-25
+│    [2026-03-25] 2e10642 docs: context sync refresh 2026-03-25
+│    [2026-03-24] 5482895 chore: context sync — refresh auto-generated context files
+│    [2026-03-24] 74fe040 chore: remove Dependabot version updates — security alerts r
+│    [2026-03-20] d22043f chore: deploy Descent Protocol infrastructure + sync context
+│    [2026-03-18] 2063dc2 chore: add system navigation footer to README
+│    [2026-03-09] e02d1b2 refactor: root cleanup + cold-storage archive + ecosystem.ya
+│    [2026-03-05] d8ff7f4 chore: checkpoint pending changes
+│    [2026-02-24] 4dece68 chore: update documentation assets
+│    [2026-02-24] f6ee0d0 chore: sync context files and pitch deck from registry
+│    [2026-02-18] 2ebc0ac feat: add art-to-commerce dispatch workflow (Edge 2: II→III)
+│    [2026-02-18] 2a25523 docs: add pull request template
+│    [2026-02-18] 5b1c8b1 docs: add SECURITY.md with vulnerability reporting policy
+│    [2026-02-18] 4cbaab0 docs: add CONTRIBUTING.md with JavaScript development guide
+│    [2026-02-17] 6a9a2be feat: add seed.yaml (SENSORIA sprint)
+│    [2026-02-13] 964bf4f chore(alchemia): add PROVENANCE.yaml — source material manif
+│    [2026-02-13] ccca1f4 chore(alchemia): ingest class_index.html
+│    [2026-02-13] ccccf3b chore(alchemia): ingest mcp_bridge_py.html
+│    [2026-02-13] cac5399 chore(alchemia): ingest sync_engine_py.html
+│    [2026-02-13] 0e3840f chore(alchemia): ingest status.json
+│    [2026-02-13] 164034c chore(alchemia): ingest style_cb_9ff733b0.css
+│    [2026-02-13] 2aac14f chore(alchemia): ingest function_index.html
+│    [2026-02-13] c2b5f90 chore(alchemia): ingest knowledge_graph_py.html
+│    [2026-02-13] f2f6772 chore(alchemia): ingest maintenance_daemon_py.html
+│    [2026-02-13] 2052436 chore(alchemia): ingest discovery_engine_py.html
+│
+│  FINAL ARCHITECTURE (HEAD):
+│    ├── docs/
+│    ├── docs/academic/
+│    ├── docs/academic/data-sets/
+│    ├── docs/academic/papers/
+│    ├── docs/academic/papers/conferences/
+│    ├── docs/academic/papers/journals/
+│    ├── docs/academic/posters/
+│    ├── docs/academic/presentations/
+│    ├── docs/academic/templates/
+│    ├── docs/adr/
+│    ├── docs/architecture/
+│    ├── docs/business/
+│    ├── docs/business/GRANT_MATERIALS/
+│    ├── docs/community/
+│    ├── docs/community/artist-prospecting/
+│    ├── docs/community/deployment-playbooks/
+│    ├── docs/community/example-projects/
+│    ├── docs/community/grant-resources/
+│    ├── docs/community/templates/
+│    ├── docs/flow-patterns/
+│    ... (122 more directories)
+│
+
+┌─ REPOSITORY: organvm-ii-poiesis/object-lessons
+│  Commits: 17
+│  Range: 2026-03-20 → 2026-03-21
+│
+│  COMMIT HISTORY (recent first):
+│    [2026-03-21] e507f1f docs: create CLAUDE.md — Astro editorial site architecture, 
+│    [2026-03-20] e7a48bb chore: Cloudflare deployment — live at object-lessons.pages.
+│    [2026-03-20] d64fcf4 fix: build verification — resolve all TypeScript errors, cha
+│    [2026-03-20] 41c9f20 feat: expand film database from 27 to 253 entries across all
+│    [2026-03-20] 5674412 feat: add RSS feed, OG image generator, and category validat
+│    [2026-03-20] f954d5b feat: collaborator dashboard — HMAC auth, submissions API, d
+│    [2026-03-20] 46c0f08 feat: submission system — D1 helpers, API endpoint, form, an
+│    [2026-03-20] 703f321 feat: React islands — FilmographyTable, PipelineTimeline, Ob
+│    [2026-03-20] 388a61a fix: essays contain full research briefs, not condensed summ
+│    [2026-03-20] 3ee0ad2 feat: collection pages — episodes, essays, objects archive +
+│    [2026-03-20] 8ba2802 feat: static pages — Home, About, Research, 404 (Task 6)
+│    [2026-03-20] f118272 feat: seed 10 episode MDX + 6 essay MDX files (Task 5)
+│    [2026-03-20] 596b5b5 feat: seed 10 object MDX files with frontmatter and biograph
+│    [2026-03-20] 7221828 feat: layouts and core Astro components (Task 3)
+│    [2026-03-20] e6bc381 feat: add data loader library and unblock src/lib from globa
+│    [2026-03-20] 2f0cc26 feat: content collections, data loaders, and starter film/pi
+│    [2026-03-20] a0e4f6a feat: scaffold Astro project with full configuration
+│
+│  FINAL ARCHITECTURE (HEAD):
+│    ├── public/
+│    ├── public/images/
+│    ├── public/images/og/
+│    ├── scripts/
+│    ├── src/
+│    ├── src/components/
+│    ├── src/components/astro/
+│    ├── src/components/react/
+│    ├── src/content/
+│    ├── src/content/episodes/
+│    ├── src/content/essays/
+│    ├── src/content/objects/
+│    ├── src/data/
+│    ├── src/layouts/
+│    ├── src/lib/
+│    ├── src/pages/
+│    ├── src/pages/api/
+│    ├── src/pages/api/collaborator/
+│    ├── src/pages/api/submissions/
+│    ├── src/pages/episodes/
+│    ... (3 more directories)
+│
+═══════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION: organvm-iii-ergon
+═══════════════════════════════════════════════════════════════════════════════
+
+
+┌─ REPOSITORY: organvm-iii-ergon/organvm-iii-ergon--superproject
+│  Commits: 60
+│  Range: 2026-02-18 → 2026-04-15
+│
+│  COMMIT HISTORY (recent first):
+│    [2026-04-15] b5446fc chore: update submodule refs
+│    [2026-04-15] 1a06363 chore: update submodule refs and context files
+│    [2026-04-02] ae08b0a chore: sync public-record-data-scrapper pointer
+│    [2026-03-31] 106f12b chore: add sign-signal--voice-synth as submodule
+│    [2026-03-30] 6a8fbc6 chore: sync sovereign-systems pointer (project board + intak
+│    [2026-03-27] a2506f2 chore: sync sovereign-systems pointer (purification + mobile
+│    [2026-03-27] 9e48f4e chore: sync sovereign-systems--elevate-align pointer (purifi
+│    [2026-03-26] c56ee88 chore: add sovereign-systems--elevate-align as submodule
+│    [2026-03-25] e2332ba chore: add content-engine--asset-amplifier as submodule
+│    [2026-03-24] be34caa chore: sync all submodule pointers — context files flushed
+│    [2026-03-24] 30f557a chore: context sync — refresh auto-generated context files
+│    [2026-03-24] 1afd703 docs: add contribution backflow artifact (anthropic testing-
+│    [2026-03-08] fde0ed3 chore: sync context files (promotion state propagation)
+│    [2026-03-05] afa97e0 chore: update submodule pointers after checkpoint
+│    [2026-03-05] 41a3599 fix: make submodule standards findings warning-level
+│    [2026-03-05] 556c71a chore: add platform standards audit script
+│    [2026-03-04] dcaaa62 chore: checkpoint all local changes
+│    [2026-03-04] 3467b9c chore: merge remote main and checkpoint all local changes
+│    [2026-03-04] f78e15b chore: checkpoint remaining local changes
+│    [2026-03-04] bb88b63 chore: checkpoint all local changes
+│    [2026-03-04] d63b723 fix: add local minimal workflow file
+│    [2026-03-04] 13adfba fix: replace .github submodule with local minimal workflow
+│    [2026-03-04] 2402ff2 chore: refresh submodule pointers
+│    [2026-03-04] 1e3bcb4 ci: fix workspace type resolution and add missing eslint con
+│    [2026-03-04] 49e04cc ci: final workflow infrastructure fixes
+│    [2026-03-04] 067b387 ci: final workflow stabilization round
+│    [2026-03-04] 76b0ba1 ci: update submodule pointers after second round of fixes
+│    [2026-03-04] 8b0c2fd ci: update submodule pointers after workflow stabilization
+│    [2026-03-03] 0ac4b96 docs: update CLAUDE.md organ map with current promotion stat
+│    [2026-02-28] e2ee651 chore: sync virgil-training-overlay and enterprise-plugin po
+│
+│  FINAL ARCHITECTURE (HEAD):
+│    ├── docs/
+│    ├── docs/contributions/
+│
+
+┌─ REPOSITORY: organvm-iii-ergon/content-engine--asset-amplifier
+│  Commits: 62
+│  Range: 2026-03-24 → 2026-04-30
+│
+│  COMMIT HISTORY (recent first):
+│    [2026-04-30] 4abab4a chore: reconcile seed.yaml + README + .gitignore with canoni
+│    [2026-04-30] 5a55816 docs: add formation closure governance sequence
+│    [2026-04-30] 5c3ed9e docs: frame prompt process as critical conversation
+│    [2026-04-30] d72212e docs: preserve nuance in prompt bundle process
+│    [2026-04-30] 810795c docs(CLAUDE.md): document dual-runtime API, wrangler alias, 
+│    [2026-04-30] ca8810f docs: generalize prompt bundle process
+│    [2026-04-30] 9a6cad5 docs: add pasteboard meta-process prompt
+│    [2026-04-30] 99da43c docs: add universal prompt critical report
+│    [2026-04-26] 1c46820 chore(plans): Persist Alpha-to-Omega multiverse blueprints a
+│    [2026-04-23] 1bd61d5 Add repository standards (editorconfig, gitattributes)
+│    [2026-04-20] 9ec4fe8 feat: Stripe checkout integration — Creator/Studio/Enterpris
+│    [2026-04-15] 6e028e0 chore: update auto-generated context files
+│    [2026-03-30] a457a38 chore: migrate to template-based project board #6, close #4
+│    [2026-03-30] daa42ee feat: GitHub Projects V2 board — 14 issues, fields configure
+│    [2026-03-30] 92122a9 feat: GitHub Issues roadmap — 14 issues across 3 layers + in
+│    [2026-03-30] 338752e feat: 5-platform generation + improved prompts + accurate up
+│    [2026-03-28] 949d95f feat: complete Layer 1 dashboard — all 6 pages live with rea
+│    [2026-03-28] e64b666 feat: live Dashboard + Assets pages — real data from API
+│    [2026-03-28] 7e5b833 chore: sync genesis-project conversation docs
+│    [2026-03-28] b423365 feat: upload → auto-generate content via Groq (production)
+│    [2026-03-27] f72f8e5 fix: upload button works + settings loads instantly
+│    [2026-03-27] 0e69d2f feat: file uploads live — R2 storage + multipart upload + fi
+│    [2026-03-27] 40c3128 feat: mobile-first dashboard + modular test suite
+│    [2026-03-27] 116f593 feat: mobile-first dashboard — bottom nav, touch targets, re
+│    [2026-03-27] 4eac123 test: modular test suite — mappers, crypto, providers, scori
+│    [2026-03-27] 6dcfcc1 docs: CLAUDE.md — add live deployment URLs, update status to
+│    [2026-03-27] aeb9456 feat: dashboard connected to production API
+│    [2026-03-27] da42532 feat: API live on Cloudflare Workers — Hono + Neon PostgreSQ
+│    [2026-03-27] be1c344 feat: production deployment — dashboard live on Cloudflare P
+│    [2026-03-27] 695a592 feat: production deployment config — Neon + Render + Cloudfl
+│
+│  FINAL ARCHITECTURE (HEAD):
+│    ├── apps/
+│    ├── apps/api/
+│    ├── apps/api/src/
+│    ├── apps/api/src/plugins/
+│    ├── apps/api/src/routes/
+│    ├── apps/cli/
+│    ├── apps/cli/src/
+│    ├── apps/dashboard/
+│    ├── apps/dashboard/src/
+│    ├── apps/dashboard/src/pages/
+│    ├── apps/dashboard/src/services/
+│    ├── docs/
+│    ├── docs/genesis-project/
+│    ├── docs/genesis-project/conversations/
+│    ├── docs/genesis-project/files/
+│    ├── docs/genesis-project/metadata/
+│    ├── docs/superpowers/
+│    ├── docs/superpowers/plans/
+│    ├── infra/
+│    ├── infra/docker/
+│    ... (45 more directories)
+│
+
+┌─ REPOSITORY: organvm-iii-ergon/sign-signal--voice-synth
+│  Commits: 6
+│  Range: 2026-03-31 → 2026-05-13
+│
+│  COMMIT HISTORY (recent first):
+│    [2026-05-13] 85f8bf2 docs(plans): add 3 Gemini plans (antigravity v2, ws-debuggin
+│    [2026-05-13] 1f4b84a feat(voice-bridge): rewrite bridge with logging+resilience; 
+│    [2026-04-29] bbada8a feat: implement macOS voice bridge for Antigravity
+│    [2026-04-23] 6fe9a00 Add repository standards (editorconfig, gitattributes)
+│    [2026-04-15] e15ad9c chore: update auto-generated context files
+│    [2026-03-31] ae0a175 feat: scaffold sign-signal--voice-synth (Speech Score Engine
+│
+│  FINAL ARCHITECTURE (HEAD):
+│    ├── apps/
+│    ├── apps/api/
+│    ├── apps/api/src/
+│    ├── apps/voice-bridge/
+│    ├── apps/web/
+│    ├── apps/web/src/
+│    ├── apps/web/src/app/
+│    ├── packages/
+│    ├── packages/db/
+│    ├── packages/db/prisma/
+│    ├── packages/shared/
+│    ├── packages/shared/src/
+│    ├── specs/
+│    ├── specs/layer-1-dialogue-loop-tracker/
+│    ├── specs/layer-1-dialogue-loop-tracker/contracts/
+│
+═══════════════════════════════════════════════════════════════════════════════
+📦 ORGANIZATION: organvm-iv-taxis
+═══════════════════════════════════════════════════════════════════════════════
+
+
+┌─ REPOSITORY: organvm-iv-taxis/organvm-iv-taxis--superproject
+│  Commits: 95
+│  Range: 2026-02-18 → 2026-04-20
+│
+│  COMMIT HISTORY (recent first):
+│    [2026-04-20] b886ef9 chore: phase transition sprint — governance CI + plan artifa
+│    [2026-04-18] f661dff chore: update a-i--skills submodule pointer + docs for distr
+│    [2026-04-17] 025b98f chore: update agentic-titan submodule pointer (chaos enginee
+│    [2026-04-16] 8ab2599 chore: update agentic-titan submodule pointer (emergence cha
+│    [2026-04-15] d5ce550 chore: update submodule refs
+│    [2026-04-15] 72335e9 chore: gitignore claude session artifacts
+│    [2026-04-15] 44b8e39 chore: update submodule refs, context files, and add contrib
+│    [2026-04-07] 63aa7f3 chore: sync all submodule pointers after context file update
+│    [2026-04-07] d30ae92 chore: sync organvm-iv-taxis submodule pointers + context ti
+│    [2026-04-06] c46351e docs: UMFAS plan — path from hidden to clear
+│    [2026-04-06] 658068e docs: UMFAS birth reframing — compression not creation
+│    [2026-04-06] 3968aa6 docs: UMFAS plan final — 25 atoms + implementation frontier
+│    [2026-04-06] 92aac4b docs: update UMFAS plan — WHY + governance + V1/V2/V3 (680→1
+│    [2026-04-06] 4833f19 docs: persist session plans — UMFAS derivation + census + fo
+│    [2026-04-05] d31b7a1 docs: persist process crystallization plan (2026-04-05)
+│    [2026-04-04] d89509f docs: finalize healing of non-idempotent blocks in AGENTS.md
+│    [2026-04-04] 2ce8671 docs: heal non-idempotent docs and sync submodules
+│    [2026-04-04] 073b695 chore: sync System Library + idempotency fix from organvm-en
+│    [2026-04-04] e6a5cf1 chore: sync System Library from organvm-engine (158f7a5)
+│    [2026-04-04] 8fce332 feat: DISSECTION.md — ORGAN-IV flattened hierarchy post-mort
+│    [2026-04-04] 04c745a docs: sync CLAUDE.md/AGENTS.md/GEMINI.md context, bump submo
+│    [2026-04-02] 595d0d4 fix: fleet.yaml — add DONE-320 triple collision to Gemini da
+│    [2026-04-02] 4946d0a docs: FLEET.md — add process reference section, sync submodu
+│    [2026-04-02] 68725d4 fix: fleet.yaml + FLEET.md — codify S51-S53 cross-agent drif
+│    [2026-04-02] 3c09658 feat: add fleet.yaml and FLEET.md at superproject level
+│    [2026-04-02] fff08e3 chore: bump orchestration-start-here submodule
+│    [2026-04-02] 1eec460 chore: commit 72h reconciliation refinements — STEERING clas
+│    [2026-03-31] 29fe91e chore: sync orchestration-start-here pointer (action stream 
+│    [2026-03-31] 0159387 chore: sync orchestration-start-here pointer (session-close 
+│    [2026-03-31] ebad803 chore: sync orchestration-start-here pointer (final)
+│
+│  FINAL ARCHITECTURE (HEAD):
+│    ├── research/
+│    ├── research/archive/
+│    ├── research/archive/2026-03-08-gemini-reports/
+│    ├── research/archive/cloudbase-mcp/
+│    ├── research/archive/mcp-servers/
+│    ├── tools/
+│
+
+
+═══════════════════════════════════════════════════════════════════════════════
+📊 ARCHITECTURAL EVOLUTION TIMELINE
+═══════════════════════════════════════════════════════════════════════════════
+
+
+📅 ?
+   • organvm-i-theoria/organvm-corpvs-testamentvm: Not Found
+
+📅 2026-05-13
+   • organvm-i-theoria/atomic-substrata: docs: linguistic taxonomy v1 schema extension
+   • organvm-iii-ergon/sign-signal--voice-synth: docs(plans): add 3 Gemini plans (antigravity v2, ws-debuggin
+   • organvm-iii-ergon/sign-signal--voice-synth: feat(voice-bridge): rewrite bridge with logging+resilience; 
+
+📅 2026-04-30
+   • organvm-iii-ergon/content-engine--asset-amplifier: chore: reconcile seed.yaml + README + .gitignore with canoni
+   • organvm-iii-ergon/content-engine--asset-amplifier: docs: add formation closure governance sequence
+   • organvm-iii-ergon/content-engine--asset-amplifier: docs: frame prompt process as critical conversation
+   • organvm-iii-ergon/content-engine--asset-amplifier: docs: preserve nuance in prompt bundle process
+   • organvm-iii-ergon/content-engine--asset-amplifier: docs(CLAUDE.md): document dual-runtime API, wrangler alias, 
+   • organvm-iii-ergon/content-engine--asset-amplifier: docs: generalize prompt bundle process
+   • organvm-iii-ergon/content-engine--asset-amplifier: docs: add pasteboard meta-process prompt
+   • organvm-iii-ergon/content-engine--asset-amplifier: docs: add universal prompt critical report
+
+📅 2026-04-29
+   • organvm-ii-poiesis/metasystem-master: feat: substrate elevation — register 3 workspaces (SPEC-024 
+   • organvm-iii-ergon/sign-signal--voice-synth: feat: implement macOS voice bridge for Antigravity
+
+📅 2026-04-26
+   • organvm-iii-ergon/content-engine--asset-amplifier: chore(plans): Persist Alpha-to-Omega multiverse blueprints a
+
+📅 2026-04-23
+   • organvm-i-theoria/atomic-substrata: Add repository standards (editorconfig, gitattributes)
+   • organvm-i-theoria/atomic-substrata: feat: prompt atomization pipeline outputs [session 2026-04-2
+   • organvm-ii-poiesis/metasystem-master: Add repository standards (editorconfig, gitattributes)
+   • organvm-iii-ergon/content-engine--asset-amplifier: Add repository standards (editorconfig, gitattributes)
+   • organvm-iii-ergon/sign-signal--voice-synth: Add repository standards (editorconfig, gitattributes)
+
+📅 2026-04-20
+   • meta-organvm/meta-organvm--superproject: chore: archive S-Intelligence plan (constitutional intellige
+   • meta-organvm/meta-organvm--superproject: chore: sync engine + mcp-server + corpus pointers
+   • meta-organvm/meta-organvm--superproject: feat: regenerate corpus graph with expanded concept vocabula
+   • organvm-ii-poiesis/metasystem-master: Merge pull request #21 from organvm-ii-poiesis/feat/cla-enfo
+   • organvm-ii-poiesis/metasystem-master: feat: add CLA enforcement via contributor-assistant
+   • organvm-iii-ergon/content-engine--asset-amplifier: feat: Stripe checkout integration — Creator/Studio/Enterpris
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: phase transition sprint — governance CI + plan artifa
+
+📅 2026-04-19
+   • meta-organvm/meta-organvm--superproject: feat: first corpus knowledge graph artifact (118 nodes, 172 
+   • meta-organvm/meta-organvm--superproject: fix: zettel validator passes all 9 checks (0 errors)
+   • meta-organvm/meta-organvm--superproject: chore: sync corpus pointer + session state
+   • meta-organvm/meta-organvm--superproject: chore: archive session state (S-Elevation + prior session en
+   • meta-organvm/meta-organvm--superproject: chore: archive S-Elevation plan (compiled spec elevation)
+
+📅 2026-04-18
+   • meta-organvm/meta-organvm--superproject: chore: zettel-index — upgrade 5 compiled specs partial→clean
+   • meta-organvm/meta-organvm--superproject: docs: elevate TRX-C.04 — remove QA seams, integrate charter 
+   • meta-organvm/meta-organvm--superproject: docs: elevate TRX-C.09 — remove 4 QA seams, unify lifecycle 
+   • meta-organvm/meta-organvm--superproject: docs: elevate TRX-C.07 — remove conversational opening + dir
+   • meta-organvm/meta-organvm--superproject: docs: elevate TRX-C.10 — remove opening address + tail offer
+   • meta-organvm/meta-organvm--superproject: docs: elevate TRX-C.02 — remove tail QA artifact
+   • meta-organvm/meta-organvm--superproject: chore: sync corpus pointer (session continuations + IRF audi
+   • meta-organvm/meta-organvm--superproject: chore: sync corpus pointer (fossil record catch-up)
+   • meta-organvm/meta-organvm--superproject: chore: sync corpus pointer (prompt registry + fossil record)
+   • meta-organvm/meta-organvm--superproject: chore: sync submodule refs (S-audit-close-2026-04-18)
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: update a-i--skills submodule pointer + docs for distr
+
+📅 2026-04-17
+   • meta-organvm/meta-organvm--superproject: chore: sync organvm-engine pointer (test fixes — 20-criterio
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: update agentic-titan submodule pointer (chaos enginee
+
+📅 2026-04-16
+   • meta-organvm/meta-organvm--superproject: chore: sync submodule refs (IRF updates + MCP metrics worksp
+   • meta-organvm/meta-organvm--superproject: chore: sync submodule ref (Session F — AX-7/8/9, RR-9, inter
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: update agentic-titan submodule pointer (emergence cha
+
+📅 2026-04-15
+   • meta-organvm/meta-organvm--superproject: chore: sync submodule refs (Session D residual — SYS-065, SY
+   • meta-organvm/meta-organvm--superproject: docs: add Session D residual plan (SYS-065 + SYS-067)
+   • meta-organvm/meta-organvm--superproject: chore: gitignore session artifacts and update submodule refs
+   • meta-organvm/meta-organvm--superproject: chore: sync corpus pointer (IRF session close-out)
+   • meta-organvm/meta-organvm--superproject: chore: sync corpus pointer (witness hook entry)
+   • meta-organvm/meta-organvm--superproject: chore: sync corpus pointer (fossil-record.jsonl testament ev
+   • meta-organvm/meta-organvm--superproject: chore: update submodule refs and add session archive
+   • meta-organvm/meta-organvm--superproject: chore: update submodule refs (engine + corpus)
+   • meta-organvm/meta-organvm--superproject: chore: update submodule refs, context files, and add contrib
+   • organvm-i-theoria/organvm-i-theoria--superproject: chore: update submodule refs
+   • organvm-i-theoria/organvm-i-theoria--superproject: chore: update submodule ref (studium-generale)
+   • organvm-i-theoria/organvm-i-theoria--superproject: chore: update submodule refs and context files
+   • organvm-i-theoria/atomic-substrata: chore: update auto-generated context files
+   • organvm-i-theoria/atomic-substrata: feat: add implements field binding to post-flood concepts
+   • organvm-ii-poiesis/metasystem-master: chore: update auto-generated context files
+   • organvm-iii-ergon/organvm-iii-ergon--superproject: chore: update submodule refs
+   • organvm-iii-ergon/organvm-iii-ergon--superproject: chore: update submodule refs and context files
+   • organvm-iii-ergon/content-engine--asset-amplifier: chore: update auto-generated context files
+   • organvm-iii-ergon/sign-signal--voice-synth: chore: update auto-generated context files
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: update submodule refs
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: gitignore claude session artifacts
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: update submodule refs, context files, and add contrib
+
+📅 2026-04-07
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: sync all submodule pointers after context file update
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: sync organvm-iv-taxis submodule pointers + context ti
+
+📅 2026-04-06
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: docs: UMFAS plan — path from hidden to clear
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: docs: UMFAS birth reframing — compression not creation
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: docs: UMFAS plan final — 25 atoms + implementation frontier
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: docs: update UMFAS plan — WHY + governance + V1/V2/V3 (680→1
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: docs: persist session plans — UMFAS derivation + census + fo
+
+📅 2026-04-05
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: docs: persist process crystallization plan (2026-04-05)
+
+📅 2026-04-04
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: docs: finalize healing of non-idempotent blocks in AGENTS.md
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: docs: heal non-idempotent docs and sync submodules
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: sync System Library + idempotency fix from organvm-en
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: sync System Library from organvm-engine (158f7a5)
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: feat: DISSECTION.md — ORGAN-IV flattened hierarchy post-mort
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: docs: sync CLAUDE.md/AGENTS.md/GEMINI.md context, bump submo
+
+📅 2026-04-02
+   • organvm-iii-ergon/organvm-iii-ergon--superproject: chore: sync public-record-data-scrapper pointer
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: fix: fleet.yaml — add DONE-320 triple collision to Gemini da
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: docs: FLEET.md — add process reference section, sync submodu
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: fix: fleet.yaml + FLEET.md — codify S51-S53 cross-agent drif
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: feat: add fleet.yaml and FLEET.md at superproject level
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: bump orchestration-start-here submodule
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: commit 72h reconciliation refinements — STEERING clas
+
+📅 2026-03-31
+   • organvm-iii-ergon/organvm-iii-ergon--superproject: chore: add sign-signal--voice-synth as submodule
+   • organvm-iii-ergon/sign-signal--voice-synth: feat: scaffold sign-signal--voice-synth (Speech Score Engine
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: sync orchestration-start-here pointer (action stream 
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: sync orchestration-start-here pointer (session-close 
+   • organvm-iv-taxis/organvm-iv-taxis--superproject: chore: sync orchestration-start-here pointer (final)
+
+📅 2026-03-30
+   • organvm-iii-ergon/organvm-iii-ergon--superproject: chore: sync sovereign-systems pointer (project board + intak
+   • organvm-iii-ergon/content-engine--asset-amplifier: chore: migrate to template-based project board #6, close #4
+   • organvm-iii-ergon/content-engine--asset-amplifier: feat: GitHub Projects V2 board — 14 issues, fields configure
+   • organvm-iii-ergon/content-engine--asset-amplifier: feat: GitHub Issues roadmap — 14 issues across 3 layers + in
+
+
+═══════════════════════════════════════════════════════════════════════════════
+📋 SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+Total Organizations: 5
+Total Repos Targeted: 11
+Repos with Data: 11
+Total Commit Events: 240
+
+Generated: 2026-05-18T23:20:53.060254Z

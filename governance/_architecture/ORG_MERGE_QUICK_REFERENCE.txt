@@ -1,0 +1,345 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                  GitHub Organization Merge: Quick Reference                   ║
+║                             CLI Commands & Workflows                          ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+⚠️ CRITICAL CONSTRAINTS
+═══════════════════════════════════════════════════════════════════════════════════
+
+GitHub does NOT provide native org merge API. You must:
+  ✗ Cannot merge org metadata
+  ✗ Cannot merge org settings
+  ✗ Cannot auto-transfer teams
+  ✗ Cannot auto-transfer permissions
+
+You CAN:
+  ✓ Migrate repositories (one by one)
+  ✓ Recreate team structure (manual or scripted)
+  ✓ Copy branch protections
+  ✓ Update webhooks
+
+═══════════════════════════════════════════════════════════════════════════════════
+🎯 THREE MERGE STRATEGIES
+═══════════════════════════════════════════════════════════════════════════════════
+
+STRATEGY 1: UNIFIED SUPERPROJECT (RECOMMENDED FOR ORGANVM)
+┌─────────────────────────────────────────────────────────────┐
+│ Keep 8 organizations, add unified orchestrator               │
+│                                                               │
+│ organvm-unified--superproject/                               │
+│  ├── submodule: meta-organvm--superproject                  │
+│  ├── submodule: organvm-i-theoria--superproject             │
+│  ├── submodule: organvm-ii-poiesis--superproject            │
+│  ├── submodule: organvm-iii-ergon--superproject             │
+│  ├── submodule: organvm-iv-taxis--superproject              │
+│  ├── submodule: organvm-v-logos--superproject               │
+│  ├── submodule: organvm-vi-koinonia--superproject           │
+│  └── submodule: organvm-vii-kerygma--superproject           │
+│                                                               │
+│ Benefits:                                                     │
+│  ✓ No migration risk                                         │
+│  ✓ Preserves all permissions                                │
+│  ✓ Single navigation entry point                            │
+│  ✓ Can implement immediately                                │
+│  ✗ Still requires manual nav between orgs                   │
+│                                                               │
+│ Implementation time: 30 minutes                              │
+└─────────────────────────────────────────────────────────────┘
+
+STRATEGY 2: GRADUAL CONSOLIDATION (SAFE)
+┌─────────────────────────────────────────────────────────────┐
+│ Migrate non-critical orgs into primary org over phases       │
+│                                                               │
+│ Phase 1: organvm-v-logos (3 repos) → meta-organvm          │
+│ Phase 2: organvm-vi-koinonia (3 repos) → meta-organvm      │
+│ Phase 3: organvm-vii-kerygma (3 repos) → meta-organvm      │
+│ Final: 8 orgs → 5 orgs (meta, i, ii, iii, iv)              │
+│                                                               │
+│ Benefits:                                                     │
+│  ✓ Testable per phase                                       │
+│  ✓ Can roll back each phase                                 │
+│  ✓ Lower risk per migration                                 │
+│  ✗ Time-consuming (3 phases × 2 weeks each)                │
+│  ✗ Multiple migrations (complex)                            │
+│                                                               │
+│ Implementation time: 6-8 weeks                               │
+└─────────────────────────────────────────────────────────────┘
+
+STRATEGY 3: FULL CONSOLIDATION (RISKY)
+┌─────────────────────────────────────────────────────────────┐
+│ Merge all 8 orgs into 1 mega-org (meta-organvm)             │
+│                                                               │
+│ Final: meta-organvm with 35+ repos                           │
+│                                                               │
+│ Benefits:                                                     │
+│  ✓ Single org (unified permissions)                         │
+│  ✓ Simplified structure                                     │
+│  ✗ Hard to undo (very risky)                                │
+│  ✗ Permission complexity                                    │
+│  ✗ Billing consolidation                                    │
+│  ✗ Team management difficult                                │
+│  ✗ GitHub limits (500K repos, 5K teams)                    │
+│                                                               │
+│ Implementation time: 8-10 weeks                              │
+│ Risk level: HIGH                                             │
+└─────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════════
+🛠️ CLI COMMANDS
+═══════════════════════════════════════════════════════════════════════════════════
+
+AUTHENTICATION
+──────────────────────────────────────────────────────────────────────────────────
+# Login to GitHub
+gh auth login --scopes admin:org,repo
+
+# Verify authentication
+gh auth status
+
+# Check org membership
+gh org list --no-limit
+
+LIST ORGANIZATIONS & REPOS
+──────────────────────────────────────────────────────────────────────────────────
+# List all orgs in enterprise
+gh api graphql -f query='
+  query {
+    enterprise(slug: "meta-organvm") {
+      organizations(first: 100) {
+        nodes { login }
+      }
+    }
+  }
+'
+
+# List all repos in org
+gh api orgs/ORG_NAME/repos --paginate -q '.[] | .name'
+
+# Count repos in org
+gh api orgs/ORG_NAME/repos --paginate -q '.[] | .name' | wc -l
+
+# Detailed repo info
+gh api repos/ORG/REPO -q '{name, owner: .owner.login, isPrivate, createdAt}'
+
+MIGRATE REPOSITORIES (CORE OPERATION)
+──────────────────────────────────────────────────────────────────────────────────
+# Method 1: Using installed gh-org-migrate script (RECOMMENDED)
+gh-org-migrate SOURCE_ORG TARGET_ORG                 # All repos
+gh-org-migrate SOURCE_ORG TARGET_ORG REPO_NAME       # Single repo
+
+# Method 2: Manual migration (full control)
+# Step 1: Clone bare
+git clone --bare https://github.com/SOURCE_ORG/REPO.git REPO.git
+cd REPO.git
+
+# Step 2: Create target repo
+gh repo create TARGET_ORG/REPO --private --source=none
+
+# Step 3: Push all refs
+git push --mirror https://github.com/TARGET_ORG/REPO.git
+
+# Step 4: Verify
+git ls-remote https://github.com/TARGET_ORG/REPO.git | wc -l
+
+# Step 5: Cleanup
+cd ..
+rm -rf REPO.git
+
+UPDATE LOCAL CLONES
+──────────────────────────────────────────────────────────────────────────────────
+# Update single clone
+cd /path/to/local/repo
+git remote set-url origin https://github.com/NEW_ORG/REPO.git
+git remote -v
+
+# Update all clones in directory
+for repo in ~/workspace/*; do
+  cd "$repo"
+  REMOTE=$(git config --get remote.origin.url)
+  if [[ $REMOTE == *"OLD_ORG"* ]]; then
+    NEW_REMOTE=${REMOTE//OLD_ORG/NEW_ORG}
+    git remote set-url origin "$NEW_REMOTE"
+  fi
+done
+
+TEAMS & PERMISSIONS
+──────────────────────────────────────────────────────────────────────────────────
+# List teams in org
+gh api orgs/ORG_NAME/teams --paginate -q '.[] | .slug'
+
+# Add team to repo
+gh api repos/TARGET_ORG/REPO/teams \
+  -f team_slug='TEAM_NAME' \
+  -f permission='push'
+
+# Get repo teams
+gh api repos/ORG/REPO/teams -q '.[] | {name, permission}'
+
+BRANCH PROTECTIONS
+──────────────────────────────────────────────────────────────────────────────────
+# Get branch protection rules
+gh api repos/ORG/REPO/branches/main/protection
+
+# Apply basic protection to main
+gh api repos/TARGET_ORG/REPO/branches/main/protection \
+  -f required_status_checks=null \
+  -f enforce_admins=true \
+  -f required_pull_request_reviews='{"dismiss_stale_reviews":true}' \
+  -f restrictions=null
+
+WEBHOOKS
+──────────────────────────────────────────────────────────────────────────────────
+# List webhooks
+gh api repos/ORG/REPO/hooks
+
+# Create webhook
+gh api repos/TARGET_ORG/REPO/hooks \
+  -f url='https://example.com/webhook' \
+  -f events='["push","pull_request"]' \
+  -f active=true
+
+GITHUB ACTIONS SECRETS
+──────────────────────────────────────────────────────────────────────────────────
+# List secrets
+gh secret list -R ORG/REPO
+
+# Set secret
+gh secret set SECRET_NAME -R ORG/REPO -b "secret_value"
+
+ARCHIVAL & DELETION
+──────────────────────────────────────────────────────────────────────────────────
+# Archive repo (read-only, but recoverable)
+gh repo archive ORG/REPO --confirm
+
+# Delete repo (PERMANENT)
+gh repo delete ORG/REPO --confirm
+
+═══════════════════════════════════════════════════════════════════════════════════
+📋 WORKFLOW: Migrate organvm-v-logos → meta-organvm (Example)
+═══════════════════════════════════════════════════════════════════════════════════
+
+Step 1: List repos to migrate
+$ gh api orgs/organvm-v-logos/repos --paginate -q '.[] | .name'
+  organvm-v-logos--superproject
+  organvm-v-logos.github.io
+  .github
+
+Step 2: Migrate all repos
+$ gh-org-migrate organvm-v-logos meta-organvm
+  (Interactive: confirm migration)
+
+Step 3: Verify in target org
+$ gh api orgs/meta-organvm/repos --paginate -q '.[] | .name' | grep logos
+
+Step 4: Update local clones
+$ cd ~/workspace/organvm-v-logos--superproject
+$ git remote set-url origin https://github.com/meta-organvm/organvm-v-logos--superproject
+
+Step 5: Reassign teams (if applicable)
+$ gh api repos/meta-organvm/organvm-v-logos--superproject/teams \
+    -f team_slug='organvm-maintainers' \
+    -f permission='push'
+
+Step 6: Update branch protections
+$ gh api repos/meta-organvm/organvm-v-logos--superproject/branches/main/protection \
+    -f enforce_admins=true \
+    -f required_pull_request_reviews='{"dismiss_stale_reviews":true}'
+
+Step 7: Archive source org repos
+$ gh repo archive organvm-v-logos/organvm-v-logos--superproject --confirm
+$ gh repo archive organvm-v-logos/organvm-v-logos.github.io --confirm
+$ gh repo archive organvm-v-logos/.github --confirm
+
+Step 8: Delete empty org (web UI only)
+  Go to: https://github.com/organizations/organvm-v-logos/settings
+  Scroll to "Danger Zone"
+  Click "Delete this organization"
+  Confirm
+
+═══════════════════════════════════════════════════════════════════════════════════
+✅ VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════════
+
+After migration:
+
+[ ] All repos transferred
+    $ gh api orgs/TARGET_ORG/repos --paginate -q '.[] | .name' | wc -l
+
+[ ] All refs preserved
+    $ git ls-remote https://github.com/TARGET_ORG/REPO | wc -l
+
+[ ] Teams assigned
+    $ gh api repos/TARGET_ORG/REPO/teams
+
+[ ] Branch protections applied
+    $ gh api repos/TARGET_ORG/REPO/branches/main/protection
+
+[ ] Webhooks configured
+    $ gh api repos/TARGET_ORG/REPO/hooks
+
+[ ] GitHub Actions secrets set
+    $ gh secret list -R TARGET_ORG/REPO
+
+[ ] Local clones updated
+    $ cd ~/repos && find . -name .git -exec git -C {} config remote.origin.url \;
+
+[ ] CI/CD pipelines updated
+    $ grep -r "SOURCE_ORG" .github/workflows/
+
+[ ] Documentation updated
+    $ grep -r "github.com/SOURCE_ORG" docs/
+
+[ ] Source repos archived
+    $ gh repo view SOURCE_ORG/REPO
+
+═══════════════════════════════════════════════════════════════════════════════════
+⚡ TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════════════
+
+Problem: "Push failed: remote already exists"
+Solution: Create target repo first: gh repo create TARGET_ORG/REPO --source=none
+
+Problem: "Permission denied" for migration
+Solution: Verify membership: gh auth status
+          Check org owner status: gh api orgs/ORG/members -q '.[] | .login'
+
+Problem: "Refs mismatch after push"
+Solution: Verify source refs: git ls-remote https://github.com/SOURCE_ORG/REPO
+          Verify target refs: git ls-remote https://github.com/TARGET_ORG/REPO
+          Retry push if network issue
+
+Problem: "Local clone still points to old org"
+Solution: git remote set-url origin https://github.com/NEW_ORG/REPO
+          git remote -v  (verify)
+          git fetch origin (sync)
+
+Problem: "Branch protections lost after migration"
+Solution: GitHub does NOT auto-migrate protections
+          Reapply: gh api repos/TARGET_ORG/REPO/branches/main/protection ...
+
+═══════════════════════════════════════════════════════════════════════════════════
+
+🎯 RECOMMENDATION FOR ORGANVM
+═══════════════════════════════════════════════════════════════════════════════════
+
+Use STRATEGY 1: Unified Superproject
+
+Reason:
+  • Zero migration risk (no data movement)
+  • No org deletion complexity
+  • Can implement TODAY (30 minutes)
+  • Preserves all existing permissions
+  • Adds single navigation entry point
+  • Keeps architectural separation clean
+
+Implementation:
+  1. Create organvm-unified--superproject in meta-organvm
+  2. Add all 8 org superprojects as submodules
+  3. Document in root README
+  4. Update CI/CD to reference unified project
+
+Result: ORGANVM remains 8 orgs + 1 unified reference
+
+═══════════════════════════════════════════════════════════════════════════════════
+Generated: 2026-05-19T00:08:51Z
+Status: CLI Reference & Workflow Guide

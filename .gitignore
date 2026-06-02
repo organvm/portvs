@@ -1,0 +1,7 @@
+# PORTVS — Reflection Membrane
+# Agent outboxes (transient — each agent owns its own)
+portal-out/
+# Archives
+archive/
+# Session state
+*.session

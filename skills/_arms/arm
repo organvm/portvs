@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# ~/_arms/arm — THE LOAD-PATH. The single entry point that loads/dispatches
+# capability *through* the portal. Before this existed, _arms was inert: a
+# vantage point nothing consumed. `arm` gives it agency — operator or agent
+# goes through here to reach any agent's capability (Rule #7: the loop closes).
+#
+# Engine: skills/portal-router/resolve.py (our first forged Zone-1 arm).
+# Light: pure dispatch; no state, no daemon, no deps beyond python3.
+set -euo pipefail
+
+ARMS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENGINE="${ARMS}/skills/portal-router/resolve.py"
+
+die() { echo "arm: $*" >&2; exit 1; }
+[[ -f "$ENGINE" ]] || die "engine missing: $ENGINE (run ~/_arms/verify-portal.sh)"
+command -v python3 >/dev/null 2>&1 || die "python3 required"
+
+usage() {
+  cat <<'EOF'
+arm — the _arms load-path (cross-agent capability router)
+
+  arm find <query…>          rank capabilities across ALL ecosystems
+  arm list [ecosystem]       the portal index (or one ecosystem's units)
+  arm show <eco> <name>      LOAD one capability through the portal (prints it)
+  arm status                 portal health (delegates to verify-portal.sh --check)
+  arm help                   this
+
+Ecosystems: ours · claude · agents · codex · gemini · source · opencode-commands
+            · openclaw-extensions · openclaw-agents
+
+  # find the right skill no matter which agent owns it:
+  arm find pdf extraction
+  # then load it into context through the portal:
+  arm show claude pdf-processing
+EOF
+}
+
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+  find|list|show)   exec python3 "$ENGINE" "$cmd" "$@" ;;
+  status)           exec "${ARMS}/verify-portal.sh" --check ;;
+  -h|--help|help)   usage ;;
+  *)                usage; die "unknown subcommand: $cmd" ;;
+esac
