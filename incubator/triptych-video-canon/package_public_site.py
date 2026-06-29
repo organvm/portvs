@@ -20,6 +20,7 @@ DEFAULT_SITE_DIR = SCRIPT_DIR / "site"
 DEFAULT_OUTPUT_DIR = SCRIPT_DIR / "packages"
 DEFAULT_NAME = "triptych-video-canon-site"
 MANIFEST_NAME = "package-manifest.json"
+PUBLIC_PACKAGE_READY = "public-package-ready"
 
 
 def parse_args() -> argparse.Namespace:
@@ -112,6 +113,12 @@ def public_export_counts(receipt: dict[str, Any]) -> tuple[int, int]:
     return post_count, sketch_count
 
 
+def promotion_state_for_receipt(receipt: dict[str, Any], post_count: int, sketch_count: int) -> str:
+    if receipt.get("public") is True and (post_count + sketch_count) > 0:
+        return PUBLIC_PACKAGE_READY
+    return "public-derivative-staged"
+
+
 def arrangement_summary(receipt: dict[str, Any]) -> dict[str, Any]:
     score = receipt.get("arrangement_score")
     if not isinstance(score, dict):
@@ -154,6 +161,7 @@ def edition_summary(package_dir: Path) -> dict[str, Any]:
         video_proxies = int(counts.get("video_proxies") or 0)
         audio_proxies = int(counts.get("audio_proxies") or 0)
         post_count, sketch_count = public_export_counts(receipt)
+        promotion_state = promotion_state_for_receipt(receipt, post_count, sketch_count)
         presets = [
             str(preset.get("id"))
             for preset in receipt.get("control_presets") or []
@@ -184,6 +192,9 @@ def edition_summary(package_dir: Path) -> dict[str, Any]:
                 "post_exports": post_exports,
                 "published_post_exports": post_count,
                 "visual_sketches": sketch_count,
+                "custody_tier": "public_derivative",
+                "promotion_state": promotion_state,
+                "public_export_gate": promotion_state,
                 "arrangement_score": arrangement_summary(receipt),
             }
         )
@@ -193,6 +204,26 @@ def edition_summary(package_dir: Path) -> dict[str, Any]:
         **totals,
         "editions": editions,
     }
+
+
+def verify_manifest_custody(payload: dict[str, Any]) -> None:
+    summary = payload.get("edition_summary")
+    editions = summary.get("editions") if isinstance(summary, dict) else None
+    if not isinstance(editions, list) or not editions:
+        raise SystemExit("package custody gate requires at least one packaged edition.")
+    blocked = [
+        str(edition.get("slug"))
+        for edition in editions
+        if not isinstance(edition, dict)
+        or edition.get("custody_tier") != "public_derivative"
+        or edition.get("promotion_state") != PUBLIC_PACKAGE_READY
+        or edition.get("public_export_gate") != PUBLIC_PACKAGE_READY
+    ]
+    if blocked:
+        raise SystemExit(
+            "package custody gate rejected non-public-package-ready edition(s): "
+            + ", ".join(sorted(blocked))
+        )
 
 
 def run_verify(site_dir: Path) -> None:
@@ -214,9 +245,11 @@ def copy_site(site_dir: Path, package_dir: Path, dry_run: bool) -> None:
     shutil.copytree(site_dir, package_dir)
 
 
-def rewrite_public_receipts(package_dir: Path, dry_run: bool) -> None:
-    for receipt_path in sorted((package_dir / "editions").glob("*/flash-copy.json")):
-        print(f"normalize {receipt_path}")
+def rewrite_public_receipts(site_dir: Path, package_dir: Path, dry_run: bool) -> None:
+    receipt_root = site_dir if dry_run else package_dir
+    for receipt_path in sorted((receipt_root / "editions").glob("*/flash-copy.json")):
+        target_path = package_dir / receipt_path.relative_to(receipt_root) if dry_run else receipt_path
+        print(f"normalize {target_path}")
         if dry_run:
             continue
         receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
@@ -230,7 +263,8 @@ def write_manifest(
     source_site: Path,
     dry_run: bool,
 ) -> dict[str, Any]:
-    records = file_records(package_dir)
+    manifest_source = source_site if dry_run else package_dir
+    records = file_records(manifest_source)
     payload = {
         "schema": "triptych.public-site-package.v1",
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
@@ -239,7 +273,16 @@ def write_manifest(
         "entrypoint": "index.html",
         "file_count": len(records),
         "size_bytes": tree_size(records),
-        "edition_summary": edition_summary(package_dir),
+        "edition_summary": edition_summary(manifest_source),
+        "custody": {
+            "tier": "public_derivative",
+            "promotion_state": PUBLIC_PACKAGE_READY,
+            "public_export_gate": PUBLIC_PACKAGE_READY,
+            "source_boundary": "copied from sanitized site/ only",
+            "private_durable_receipt": "work/preservation-ledger.json",
+            "forbidden_lanes": ["work/", "samples/", "renders/"],
+            "rule": "Only public-package-ready derivatives belong in this transfer package.",
+        },
         "files": records,
         "verification": {
             "public_site": "python3 verify_public_site.py --site-dir site",
@@ -254,8 +297,11 @@ def write_manifest(
     }
     manifest_path = package_dir / MANIFEST_NAME
     print(f"write {manifest_path}")
+    if dry_run and manifest_source != package_dir:
+        print(f"dry-run: manifest summary from {manifest_source}")
     if not dry_run:
         manifest_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    verify_manifest_custody(payload)
     return payload
 
 
@@ -294,7 +340,7 @@ def main() -> int:
     if not args.dry_run:
         output_dir.mkdir(parents=True, exist_ok=True)
     copy_site(site_dir, package_dir, args.dry_run)
-    rewrite_public_receipts(package_dir, args.dry_run)
+    rewrite_public_receipts(site_dir, package_dir, args.dry_run)
     manifest = write_manifest(package_dir, args.name, site_dir, args.dry_run)
     if not args.no_verify and not args.dry_run:
         run_verify(package_dir)

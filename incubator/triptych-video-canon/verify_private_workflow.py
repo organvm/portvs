@@ -624,8 +624,10 @@ def validate_edition_slate_links(edition_slate: dict[str, Any], errors: list[str
             errors.append(f"edition-refinement-slate.rows[{index}].product_shop_gate must stay deferred")
         if row.get("edition") == "porn" and row.get("public_export_gate") != "gated-local-only":
             errors.append("edition-refinement-slate porn row must stay gated-local-only")
-        if row.get("edition") != "porn" and row.get("public_export_gate") != "public-package-ready":
-            errors.append(f"edition-refinement-slate.rows[{index}].public_export_gate must be public-package-ready")
+        if row.get("edition") != "porn" and row.get("public_export_gate") not in {"public-package-ready", "not-public"}:
+            errors.append(
+                f"edition-refinement-slate.rows[{index}].public_export_gate must be public-package-ready or not-public"
+            )
         package_page = row.get("package_page")
         if package_page:
             local_ref_exists(package_page, errors, f"edition-refinement-slate.rows[{index}].package_page")
@@ -1032,8 +1034,8 @@ def validate_paired_work_order_links(paired_work_order: dict[str, Any], errors: 
             errors.append(f"paired-work-order.rows[{index}].dry_run_command must not export missing originals")
         if row.get("edition") == "porn" and row.get("public_export_gate") != "gated-local-only":
             errors.append("paired-work-order porn row must stay gated-local-only")
-        if row.get("edition") != "porn" and row.get("public_export_gate") != "public-package-ready":
-            errors.append(f"paired-work-order.rows[{index}].public_export_gate must be public-package-ready")
+        if row.get("edition") != "porn" and row.get("public_export_gate") not in {"public-package-ready", "not-public"}:
+            errors.append(f"paired-work-order.rows[{index}].public_export_gate must be public-package-ready or not-public")
         if not row.get("creative_action") or not row.get("containment_action") or not row.get("text_edit_prompt"):
             errors.append(f"paired-work-order.rows[{index}] must include creative, containment, and text edit fields")
         for ref_key in ("creative_surface", "containment_surface", "source_surface", "audio_surface", "package_page"):

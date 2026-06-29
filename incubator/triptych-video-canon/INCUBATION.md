@@ -15,6 +15,11 @@ The final home is not known yet. Portvs is serving as the conductor/incubator so
 the work can begin without deciding whether the eventual owner is Media Ark,
 portfolio, a-mavs-olevm, a new repo, or an archived experiment.
 
+The current unification note is `UNIFICATION.md`. It treats this incubator as
+the canonical Portvs record for the Visual Media Canon while Media Ark,
+portfolio, exhibit/art repos, and archive remain promotion apertures rather than
+implicit owners.
+
 ## First Reversible Artifact
 
 Build the smallest local prototype that can take a small folder of exported videos
@@ -115,11 +120,23 @@ Current prototype:
 - `package_public_site.py`: hostable package writer that verifies the public
   static site, copies only `site/` into ignored `packages/`, normalizes package
   receipts, verifies the copied package root, writes file checksums plus public
-  edition provenance, and creates a zip for static hosting or archival transfer.
+  edition provenance and custody metadata, requires packaged editions to be
+  `public-package-ready`, and creates a zip for static hosting or archival
+  transfer.
 - `verify_package.py`: read-only package-integrity gate that recomputes packaged
   file checksums, compares them with `package-manifest.json`, rejects private or
-  generated source lanes inside the package, and reruns the public-site verifier
-  against the copied package tree.
+  generated source lanes inside the package, enforces public-package-ready
+  custody metadata, and reruns the public-site verifier against the copied
+  package tree.
+- `preservation_manifest.py`: private custody ledger writer under ignored
+  `work/`. It separates private durable source preservation, private operational
+  lanes, public derivatives, and public apparatus, then records which editions
+  may transfer publicly from the verified package.
+- `prompt_lineage.py`: private prompt-lineage extractor for the wider visual
+  media canon. It scans local Codex session prompts plus relevant project docs,
+  writes ignored `work/visual-media-lineage.json` and
+  `work/visual-media-lineage.md`, and feeds the sanitized tracked synthesis in
+  `UNIFICATION.md`.
 - `generated_inventory.py`: read-only generated-media inventory that classifies
   `work/`, `renders/`, `site/`, `packages/`, and `samples/` so autonomous work
   can see local media weight without deleting anything. It can emit JSON and a

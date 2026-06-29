@@ -72,6 +72,50 @@ copy chunks. Use `--limit N --no-ffprobe` for a fast smoke test. Use
 `--write-chunks` only when intentionally materializing a local content-addressed
 chunk store under `work/atom-chunks/`, because that duplicates media bytes.
 
+## Custody Ledger
+
+The personal/public boundary is tracked as custody, not as a simple local/public
+split. Source identities and selections belong in private durable custody,
+`work/`, `samples/`, and `renders/` are private operational lanes, `site/` is a
+sanitized public derivative staging lane, and `packages/` is the public transfer
+artifact.
+
+Generate the private custody ledger:
+
+```bash
+python3 preservation_manifest.py
+```
+
+That writes ignored private receipts:
+
+- `work/preservation-ledger.json`
+- `work/preservation-ledger.md`
+- `work/preservation-ledger.html`
+
+The package manifest carries the same custody decision. `verify_package.py`
+rejects packages that contain private lanes or any edition that is not explicitly
+`public-package-ready`.
+
+## Visual Media Canon Unification
+
+`UNIFICATION.md` records the current Portvs conductor model for unifying the
+triptych work with adjacent image, media-processing, public-gateway, and exhibit
+surfaces.
+
+Refresh the private prompt-lineage receipt:
+
+```bash
+python3 prompt_lineage.py
+```
+
+That writes ignored private receipts:
+
+- `work/visual-media-lineage.json`
+- `work/visual-media-lineage.md`
+
+Those receipts may contain raw prompt excerpts and local session paths. Tracked
+docs should use only aggregate counts, clusters, and decisions.
+
 ## Landing Surface
 
 The generated page is intentionally media-first. On a wide or fullscreen

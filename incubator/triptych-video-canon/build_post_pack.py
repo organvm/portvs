@@ -185,6 +185,24 @@ def apply_profile(
     write_json(project_path, project, dry_run)
 
 
+def print_profile_plan(
+    project_path: Path,
+    profile_name: str,
+    pack_name: str,
+    export_names: tuple[str, ...],
+) -> None:
+    profile = PROFILES[profile_name]
+    print(
+        "dry-run: would apply "
+        f"{profile_name} profile to {project_path} for {pack_name} exports: "
+        f"{', '.join(export_names)}"
+    )
+    if profile is None:
+        print("dry-run: profile keeps configured render settings.")
+    else:
+        print(f"dry-run: profile settings {json.dumps(profile, sort_keys=True)}")
+
+
 def export_command(project_path: Path, export_names: tuple[str, ...], dry_run: bool) -> list[str]:
     command = [
         sys.executable,
@@ -213,6 +231,13 @@ def sync_command(project_path: Path, edition_slug: str, dry_run: bool) -> list[s
     return command
 
 
+def site_index_command(dry_run: bool) -> list[str]:
+    command = [sys.executable, str(SCRIPT_DIR / "build_site_index.py")]
+    if dry_run:
+        command.append("--dry-run")
+    return command
+
+
 def post_verify_command(project_path: Path) -> list[str]:
     return [sys.executable, str(SCRIPT_DIR / "verify_post_pack.py"), str(project_path)]
 
@@ -230,10 +255,14 @@ def main() -> int:
     export_names = PACKS[args.pack]
 
     run(build_command(args, project_path), args.dry_run)
-    apply_profile(project_path, args.profile, args.pack, export_names, args.dry_run)
+    if args.dry_run and not project_path.exists():
+        print_profile_plan(project_path, args.profile, args.pack, export_names)
+    else:
+        apply_profile(project_path, args.profile, args.pack, export_names, args.dry_run)
     run(export_command(project_path, export_names, args.dry_run), args.dry_run)
     if not args.no_sync:
         run(sync_command(project_path, edition_slug, args.dry_run), args.dry_run)
+        run(site_index_command(args.dry_run), args.dry_run)
     if not args.no_verify and not args.no_sync:
         run(post_verify_command(project_path), args.dry_run)
         run(site_verify_command(), args.dry_run)
