@@ -2314,8 +2314,10 @@ def validate_edition_refinement_slate_payload(payload: dict[str, Any]) -> list[s
             errors.append(f"edition-refinement slate row {index} product gate must remain deferred")
         if row.get("edition") == "porn" and row.get("public_export_gate") != "gated-local-only":
             errors.append("edition-refinement slate porn row must stay gated-local-only")
-        if row.get("edition") != "porn" and row.get("public_export_gate") != "public-package-ready":
-            errors.append(f"edition-refinement slate row {index} public_export_gate must be public-package-ready")
+        if row.get("edition") != "porn" and row.get("public_export_gate") not in {"public-package-ready", "not-public"}:
+            errors.append(
+                f"edition-refinement slate row {index} public_export_gate must be public-package-ready or not-public"
+            )
         package_page = row.get("package_page")
         if package_page:
             refs.append((f"rows[{index}].package_page", package_page))
@@ -3118,7 +3120,9 @@ def paired_work_order_payload(
             creative_action = str(slate.get("recommended_next_action") or source.get("recommended_source_action") or "audition before render")
             containment_action = "verify private/public/package gates before any render or source refresh"
             next_surface = str(slate.get("next_private_surface") or "work/control-auditions.html")
-        dry_run = str(render.get("dry_run_command") or slate.get("dry_run_command") or source.get("dry_run_command") or "")
+        dry_run = str(render.get("dry_run_command") or slate.get("dry_run_command") or "")
+        if not dry_run and slug != "porn":
+            dry_run = f"python3 build_post_pack.py {slug} --skip-import --profile draft --pack story --dry-run"
         text_edit_prompt = (
             f"{markdown_text(slug)}: {markdown_text(source.get('panel_arrangement_role') or slate.get('note') or creative_action)} "
             f"Audio posture: {markdown_text(audio.get('recommended_audio_action') or 'review current public sound map')}. "
@@ -3296,8 +3300,8 @@ def validate_paired_work_order_payload(payload: dict[str, Any]) -> list[str]:
             errors.append(f"paired work-order row {index} dry_run_command must not export missing originals")
         if row.get("edition") == "porn" and row.get("public_export_gate") != "gated-local-only":
             errors.append("paired work-order porn row must stay gated-local-only")
-        if row.get("edition") != "porn" and row.get("public_export_gate") != "public-package-ready":
-            errors.append(f"paired work-order row {index} public_export_gate must be public-package-ready")
+        if row.get("edition") != "porn" and row.get("public_export_gate") not in {"public-package-ready", "not-public"}:
+            errors.append(f"paired work-order row {index} public_export_gate must be public-package-ready or not-public")
         if not row.get("creative_action") or not row.get("containment_action") or not row.get("text_edit_prompt"):
             errors.append(f"paired work-order row {index} must include creative, containment, and text edit fields")
         for ref_key in ("creative_surface", "containment_surface", "source_surface", "audio_surface", "package_page"):
@@ -6944,26 +6948,6 @@ def main() -> int:
         audio_control,
         paired_work_order,
     )
-    errors = validate_private_payload(payload)
-    errors.extend(validate_release_focus_payload(focus_payload, site_dir))
-    errors.extend(validate_control_auditions_payload(auditions_payload))
-    errors.extend(validate_render_queue_payload(render_queue))
-    errors.extend(validate_static_hosting_handoff_payload(hosting_handoff))
-    errors.extend(validate_first_release_packet_payload(first_release))
-    errors.extend(validate_posting_receipt_template_payload(posting_receipt))
-    errors.extend(validate_release_cadence_payload(release_cadence))
-    errors.extend(validate_edition_refinement_slate_payload(edition_slate))
-    errors.extend(validate_cache_retention_plan_payload(retention_plan))
-    errors.extend(validate_source_curation_plan_payload(source_curation))
-    errors.extend(validate_audio_control_plan_payload(audio_control))
-    errors.extend(validate_paired_work_order_payload(paired_work_order))
-    errors.extend(validate_dashboard_payload(dashboard))
-    if errors:
-        for error in errors:
-            print(f"error: {error}")
-        return 1
-    if args.json:
-        print(json.dumps(payload, indent=2, sort_keys=True))
     if not args.dry_run:
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -7047,6 +7031,26 @@ def main() -> int:
         dashboard_doc.write_text(dashboard_markdown(dashboard), encoding="utf-8")
         dashboard_html_path.parent.mkdir(parents=True, exist_ok=True)
         dashboard_html_path.write_text(dashboard_html(dashboard), encoding="utf-8")
+    errors = validate_private_payload(payload)
+    errors.extend(validate_release_focus_payload(focus_payload, site_dir))
+    errors.extend(validate_control_auditions_payload(auditions_payload))
+    errors.extend(validate_render_queue_payload(render_queue))
+    errors.extend(validate_static_hosting_handoff_payload(hosting_handoff))
+    errors.extend(validate_first_release_packet_payload(first_release))
+    errors.extend(validate_posting_receipt_template_payload(posting_receipt))
+    errors.extend(validate_release_cadence_payload(release_cadence))
+    errors.extend(validate_edition_refinement_slate_payload(edition_slate))
+    errors.extend(validate_cache_retention_plan_payload(retention_plan))
+    errors.extend(validate_source_curation_plan_payload(source_curation))
+    errors.extend(validate_audio_control_plan_payload(audio_control))
+    errors.extend(validate_paired_work_order_payload(paired_work_order))
+    errors.extend(validate_dashboard_payload(dashboard))
+    if errors:
+        for error in errors:
+            print(f"error: {error}")
+        return 1
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
     summary = (
         "overnight checkpoint ok: "
         f"{payload['creative_track']['edition_count']} editions; "

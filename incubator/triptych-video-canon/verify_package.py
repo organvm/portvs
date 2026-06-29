@@ -17,6 +17,7 @@ DEFAULT_PACKAGE_DIR = SCRIPT_DIR / "packages" / "triptych-video-canon-site"
 MANIFEST_NAME = "package-manifest.json"
 SCHEMA = "triptych.public-site-package.v1"
 FORBIDDEN_PACKAGE_PARTS = {"work", "samples", "renders", "packages", "__pycache__"}
+PUBLIC_PACKAGE_READY = "public-package-ready"
 
 
 def parse_args() -> argparse.Namespace:
@@ -177,6 +178,26 @@ def verify_no_private_lanes(records: list[dict[str, Any]]) -> None:
         )
 
 
+def verify_custody(payload: dict[str, Any]) -> None:
+    custody = payload.get("custody")
+    if not isinstance(custody, dict):
+        raise SystemExit("package manifest missing custody")
+    required = {
+        "tier": "public_derivative",
+        "promotion_state": PUBLIC_PACKAGE_READY,
+        "public_export_gate": PUBLIC_PACKAGE_READY,
+        "source_boundary": "copied from sanitized site/ only",
+    }
+    for key, expected in required.items():
+        if custody.get(key) != expected:
+            raise SystemExit(f"package manifest custody.{key} must be {expected!r}")
+    forbidden_lanes = custody.get("forbidden_lanes")
+    if not isinstance(forbidden_lanes, list) or not {"work/", "samples/", "renders/"}.issubset(
+        set(forbidden_lanes)
+    ):
+        raise SystemExit("package manifest custody.forbidden_lanes must include work/, samples/, renders/")
+
+
 def verify_edition_summary(payload: dict[str, Any]) -> dict[str, Any]:
     summary = payload.get("edition_summary")
     if not isinstance(summary, dict):
@@ -214,10 +235,22 @@ def verify_edition_summary(payload: dict[str, Any]) -> dict[str, Any]:
         for key in ("title", "work_title", "family"):
             if not isinstance(edition.get(key), str) or not edition.get(key):
                 raise SystemExit(f"package manifest edition_summary.{slug}.{key} must be present")
+        if edition.get("custody_tier") != "public_derivative":
+            raise SystemExit(f"package manifest edition_summary.{slug}.custody_tier must be public_derivative")
+        if edition.get("promotion_state") != PUBLIC_PACKAGE_READY:
+            raise SystemExit(
+                f"package manifest edition_summary.{slug}.promotion_state must be {PUBLIC_PACKAGE_READY}"
+            )
+        if edition.get("public_export_gate") != PUBLIC_PACKAGE_READY:
+            raise SystemExit(
+                f"package manifest edition_summary.{slug}.public_export_gate must be {PUBLIC_PACKAGE_READY}"
+            )
         for key in ("clips", "video_proxies", "audio_proxies", "published_post_exports", "visual_sketches"):
             value = edition.get(key)
             if not isinstance(value, int) or value < 0:
                 raise SystemExit(f"package manifest edition_summary.{slug}.{key} must be a non-negative integer")
+        if (edition.get("published_post_exports") or 0) + (edition.get("visual_sketches") or 0) <= 0:
+            raise SystemExit(f"package manifest edition_summary.{slug} has no public exports")
         presets = edition.get("control_presets")
         if not isinstance(presets, list) or not all(isinstance(item, str) and item for item in presets):
             raise SystemExit(f"package manifest edition_summary.{slug}.control_presets must be a string list")
@@ -257,6 +290,7 @@ def main() -> int:
     payload = load_manifest(manifest_path)
     records = verify_records(payload, package_dir)
     verify_no_private_lanes(records)
+    verify_custody(payload)
     verify_edition_summary(payload)
     if not args.no_public_site_verify:
         run_public_site_verify(package_dir)
