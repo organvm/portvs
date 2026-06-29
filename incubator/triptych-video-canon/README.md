@@ -48,6 +48,30 @@ To append another text direction into the project:
 python3 export_project.py project.example.json --add-prompt "Make the right panel feel like a delayed memory." --skip-render
 ```
 
+## Media Atomization
+
+The heavy local media lanes can be treated as content-addressed atoms instead
+of permanent repo material. This is the "small object until needed" layer:
+source media stays private and restageable, while generated renders/site/package
+bytes stay reconstructable from manifests and commands.
+
+Build the local atom map without duplicating the 2 GB media surface:
+
+```bash
+python3 atomize_media.py
+```
+
+That writes ignored private receipts:
+
+- `work/media-atoms.json`: content hashes, chunk hashes, media facts, lanes,
+  and project recipes.
+- `work/media-atoms.md`: human-readable decode/rebuild model.
+
+By default this is manifest-only: it reads bytes to hash them, but it does not
+copy chunks. Use `--limit N --no-ffprobe` for a fast smoke test. Use
+`--write-chunks` only when intentionally materializing a local content-addressed
+chunk store under `work/atom-chunks/`, because that duplicates media bytes.
+
 ## Landing Surface
 
 The generated page is intentionally media-first. On a wide or fullscreen
