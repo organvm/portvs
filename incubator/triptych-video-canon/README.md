@@ -96,13 +96,34 @@ The package manifest carries the same custody decision. `verify_package.py`
 rejects packages that contain private lanes or any edition that is not explicitly
 `public-package-ready`.
 
-## Visual Media Canon Unification
+## Visual Form Canon Unification
 
-`UNIFICATION.md` records the current Portvs conductor model for unifying the
-triptych work with adjacent image, media-processing, public-gateway, and exhibit
-surfaces.
+`VISUAL_FORM_CANON.md` is the root-to-leaf map for the broader visual system:
+triptych/video, ambient screensaver and wallpaper runtimes, OGOD symbolic worlds,
+ASCII/textual visual design, browser visualizers and generative abstract
+runtimes, web/3D chambers, Media Ark custody, portfolio projection,
+exhibit/kiosk forms, and lifecycle governance.
 
-Refresh the private prompt-lineage receipt:
+`UNIFICATION.md` records the current Portvs conductor model for that canon. The
+older Visual Media Canon is now treated as one branch of the Visual Form Canon,
+not the whole object.
+
+Start cross-project review from remote repository canon, not from local
+checkout inventory:
+
+```bash
+python3 remote_repo_census.py
+```
+
+That writes ignored private receipts:
+
+- `work/remote-repo-census.json`
+- `work/remote-repo-census.md`
+
+Current remote-canon scope is 273 repositories scanned across `organvm` and
+`4444J99`, with 48 visual-form candidate repositories matched.
+
+Then refresh the private prompt-lineage receipt:
 
 ```bash
 python3 prompt_lineage.py
@@ -110,11 +131,18 @@ python3 prompt_lineage.py
 
 That writes ignored private receipts:
 
+- `work/visual-form-lineage.json`
+- `work/visual-form-lineage.md`
+
+It also writes compatibility receipts for earlier Visual Media Canon references:
+
 - `work/visual-media-lineage.json`
 - `work/visual-media-lineage.md`
 
 Those receipts may contain raw prompt excerpts and local session paths. Tracked
-docs should use only aggregate counts, clusters, and decisions.
+docs should use only aggregate counts, clusters, and decisions. Current
+non-circular scope is 1,018 local session files scanned, 123 session prompts
+matched, and 28 source/project document evidence surfaces matched.
 
 ## Landing Surface
 
