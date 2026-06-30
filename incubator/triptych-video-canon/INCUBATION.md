@@ -15,10 +15,15 @@ The final home is not known yet. Portvs is serving as the conductor/incubator so
 the work can begin without deciding whether the eventual owner is Media Ark,
 portfolio, a-mavs-olevm, a new repo, or an archived experiment.
 
-The current unification note is `UNIFICATION.md`. It treats this incubator as
-the canonical Portvs record for the Visual Media Canon while Media Ark,
-portfolio, exhibit/art repos, and archive remain promotion apertures rather than
-implicit owners.
+The current root-to-leaf map is `VISUAL_FORM_CANON.md`, with `UNIFICATION.md`
+as the current Portvs conductor note. Together they treat this incubator as the
+canonical Portvs record for the Visual Form Canon: triptych/time-based media,
+ambient screensaver and wallpaper runtimes, OGOD symbolic worlds, ASCII/textual
+visual design, browser visualizers and generative abstract runtimes, web/3D
+chambers, Media Ark custody, portfolio projection, exhibit/kiosk/gallery forms,
+and lifecycle governance. Media Ark, portfolio, organvm art/runtime repos,
+exhibit/art repos, and archive remain promotion apertures rather than implicit
+owners.
 
 ## First Reversible Artifact
 
@@ -133,10 +138,16 @@ Current prototype:
   lanes, public derivatives, and public apparatus, then records which editions
   may transfer publicly from the verified package.
 - `prompt_lineage.py`: private prompt-lineage extractor for the wider visual
-  media canon. It scans local Codex session prompts plus relevant project docs,
-  writes ignored `work/visual-media-lineage.json` and
-  `work/visual-media-lineage.md`, and feeds the sanitized tracked synthesis in
-  `UNIFICATION.md`.
+  form canon. It scans local Codex session prompts plus relevant project docs,
+  writes ignored `work/visual-form-lineage.json` and
+  `work/visual-form-lineage.md`, keeps compatibility
+  `work/visual-media-lineage.*` receipts, and feeds the sanitized tracked
+  synthesis in `VISUAL_FORM_CANON.md` and `UNIFICATION.md`.
+- `remote_repo_census.py`: private GitHub repository census for the wider
+  visual form canon. It treats remote repositories as the canonical project
+  surface, writes ignored `work/remote-repo-census.json` and
+  `work/remote-repo-census.md`, and keeps local checkouts in their correct role
+  as runnable/inspectable caches.
 - `generated_inventory.py`: read-only generated-media inventory that classifies
   `work/`, `renders/`, `site/`, `packages/`, and `samples/` so autonomous work
   can see local media weight without deleting anything. It can emit JSON and a

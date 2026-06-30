@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a private prompt-lineage index for the visual media canon.
+"""Build a private prompt-lineage index for the visual form canon.
 
 The raw prompt excerpts written by this script stay under ignored work/.
 Tracked notes should use only the aggregate cluster counts and synthesized
@@ -21,6 +21,8 @@ from typing import Any, Iterable
 ROOT = Path(__file__).resolve().parent
 WORKTREE_ROOT = ROOT.parents[1]
 WORKSPACE_ROOT = WORKTREE_ROOT.parents[2]
+WORKSPACE_HOME = WORKTREE_ROOT.parents[3]
+ORGANVM_ROOT = WORKSPACE_HOME / "organvm"
 DEFAULT_SESSIONS_ROOT = Path.home() / ".codex" / "sessions"
 DEFAULT_OUT_DIR = ROOT / "work"
 
@@ -35,35 +37,115 @@ class Cluster:
 
 CLUSTERS = [
     Cluster(
-        "direct_triptych_lineage",
-        "Direct triptych / canon device lineage",
-        "Keep the timed three-panel video canon as the canonical object.",
+        "triptych_time_based_media",
+        "Triptych / time-based media",
+        "Keep the timed three-panel video canon as one reusable time-based visual form.",
         (
             r"\btriptych\b",
             r"\bthree[- ]video[- ]panel\b",
             r"\bthree[- ]panel\b",
             r"\bvideo[- ]panel\b",
             r"\binstagram story\b",
+            r"\binstagram reels?\b",
             r"\bstory[- ]style\b",
             r"\bround robin\b",
             r"\bbaroque\b",
             r"\bclassical canon\b",
             r"\bcanon\s*(?:/|or)\s*round\b",
             r"\bvideo canon\b",
+            r"\bvisual[- ]sketch\b",
+            r"\bpanel reels?\b",
             r"\bPHP7mOJT60I\b",
             r"\bleft panel\b",
             r"\bright panel\b",
         ),
     ),
     Cluster(
+        "ambient_screensaver_wallpaper_runtime",
+        "Ambient screensaver / wallpaper runtime",
+        "Treat idle displays, wallpapers, and ambient loops as runtime visual forms.",
+        (
+            r"\bscreensaver\b",
+            r"\bscreen saver\b",
+            r"\bwallpaper\b",
+            r"\bidle display\b",
+            r"\bambient display\b",
+            r"\bambient resonance\b",
+            r"\bprocedural svg waves?\b",
+            r"\bW4V3L0RD\b",
+            r"\bp5\.js\b",
+            r"\blive wallpaper\b",
+            r"\bdesktop wallpaper\b",
+            r"\bphone wallpaper\b",
+        ),
+    ),
+    Cluster(
+        "ogod_symbolic_visual_worlds",
+        "OGOD / symbolic visual worlds",
+        "Treat OGOD, Pantheon, and chamber worlds as symbolic interface visual forms.",
+        (
+            r"\bogod\b",
+            r"\bogod\.html\b",
+            r"\bogod[-_ ]?3d\b",
+            r"\betceter4\b",
+            r"\ba-mavs-olevm\b",
+            r"\bliving[- ]pantheon\b",
+            r"\bpantheon\b",
+            r"\bparthenon\b",
+            r"\btemple architecture\b",
+            r"\bchambers?\b",
+            r"\bpinakotheke\b",
+            r"\btheatron\b",
+            r"\bodeion\b",
+        ),
+    ),
+    Cluster(
+        "ascii_textual_visual_design",
+        "ASCII / textual visual design",
+        "Treat text, glyph, ANSI, and prompt-wall composition as visual forms.",
+        (
+            r"\bascii\b",
+            r"\bascii[- ]?art\b",
+            r"\bansi\b",
+            r"\bterminal art\b",
+            r"\btextual visual\b",
+            r"\btext[- ]as[- ]image\b",
+            r"\btypographic diagram\b",
+            r"\bprompt wall\b",
+            r"\bglyph\b",
+            r"\bmonospace\b",
+            r"\bA-System-Operates\b",
+            r"\bivi3\b",
+            r"\b122325-asciiart\b",
+        ),
+    ),
+    Cluster(
+        "web_3d_chambers",
+        "Web / 3D chambers",
+        "Treat WebGL, 3D, and chamber viewers as reusable spatial visual forms.",
+        (
+            r"\bwebgl\b",
+            r"\bthree\.js\b",
+            r"\b3d\b",
+            r"\b3-d\b",
+            r"\bchamber viewer\b",
+            r"\bogod-viewer\b",
+            r"\bspatial integration\b",
+            r"\bimmersive\b",
+            r"\bvisual worlds?\b",
+            r"\bviewer\b",
+        ),
+    ),
+    Cluster(
         "pre_inception_visual_media",
-        "Pre-inception image / moving-image overlap",
-        "Unify adjacent image-based work through a visual-media canon, not a narrow renderer.",
+        "Image / moving-image overlap",
+        "Unify adjacent image-based work through a visual-form canon, not a narrow renderer.",
         (
             r"\bimage[- ]based\b",
             r"\bmoving image\b",
             r"\bvisual work\b",
             r"\bvisual/design\b",
+            r"\bvisual designs?\b",
             r"\bmy own films\b",
             r"\bfilms\b",
             r"\bgenerative visual\b",
@@ -81,10 +163,12 @@ CLUSTERS = [
         ),
     ),
     Cluster(
-        "photos_library_custody",
-        "Photos library / media custody lineage",
-        "Keep source-library work metadata-first, opt-in, private, and restageable.",
+        "media_ark_source_custody",
+        "Media Ark / source custody",
+        "Keep source libraries, albums, and reusable ingestion metadata-first and restageable.",
         (
+            r"\bmedia ark\b",
+            r"\bmedia-ark\b",
             r"\bphotos app\b",
             r"\bmacos photos\b",
             r"\bphotos library\b",
@@ -96,15 +180,6 @@ CLUSTERS = [
             r"\bfinder folder\b",
             r"\bphotos album\b",
             r"\balbums?\b",
-        ),
-    ),
-    Cluster(
-        "media_ark_processing",
-        "Media Ark processing aperture",
-        "Use Media Ark for ingestion, canonical media artifacts, metadata, and indexes.",
-        (
-            r"\bmedia ark\b",
-            r"\bmedia-ark\b",
             r"\bcapture pipeline\b",
             r"\braw captures?\b",
             r"\bprocess captures?\b",
@@ -116,7 +191,7 @@ CLUSTERS = [
     ),
     Cluster(
         "portfolio_public_gateway",
-        "Portfolio / public product gateway lineage",
+        "Portfolio / public product gateway",
         "Use portfolio for public presentation, product framing, and commerce handoff.",
         (
             r"\bportfolio\b",
@@ -134,13 +209,10 @@ CLUSTERS = [
         ),
     ),
     Cluster(
-        "exhibit_art_aperture",
-        "Exhibit / artwork aperture lineage",
-        "Use exhibit or art repos for gallery, installation, kiosk, and artwork-specific forms.",
+        "exhibit_kiosk_gallery",
+        "Exhibit / kiosk / gallery",
+        "Use exhibit or art repos for gallery, installation, kiosk, and artwork-specific runtimes.",
         (
-            r"\ba-mavs-olevm\b",
-            r"\ba-mavs\b",
-            r"\betceter4\b",
             r"\bexhibit\b",
             r"\bgallery\b",
             r"\bdigital[- ]frame\b",
@@ -150,10 +222,12 @@ CLUSTERS = [
         ),
     ),
     Cluster(
-        "lifecycle_generated_media_governance",
-        "Lifecycle / generated-media governance lineage",
-        "Keep generated media bounded, ignored, verifiable, and separated from source custody.",
+        "lifecycle_generated_form_governance",
+        "Lifecycle / generated-form governance",
+        "Keep generated visual forms bounded, ignored, verifiable, and separated from source custody.",
         (
+            r"\bgenerated form\b",
+            r"\bgenerated forms\b",
             r"\bgenerated media\b",
             r"\blocal sprawl\b",
             r"\bcustody\b",
@@ -178,6 +252,7 @@ NOISE_PREFIXES = (
     "<apps_instructions>",
     "<skills_instructions>",
     "<plugins_instructions>",
+    "<codex_internal_context",
     "<turn_aborted>",
     "# AGENTS.md instructions for",
 )
@@ -196,12 +271,36 @@ DEFAULT_DOCUMENTS = (
     WORKSPACE_ROOT / "portfolio" / "README.md",
     WORKSPACE_ROOT / "portfolio" / "AGENTS.md",
     WORKSPACE_ROOT / "portfolio" / ".conductor" / "active-handoff.md",
+    ORGANVM_ROOT / "a-mavs-olevm" / "AGENTS.md",
+    ORGANVM_ROOT / "a-mavs-olevm" / "PANTHEON_EXPANSION_SUMMARY.md",
+    ORGANVM_ROOT / "a-mavs-olevm" / "OGOD.html",
+    ORGANVM_ROOT / "a-mavs-olevm" / "ogod-3d.html",
+    ORGANVM_ROOT / "a-mavs-olevm" / "js" / "ogod.js",
+    ORGANVM_ROOT / "etceter4-revival" / "PANTHEON_EXPANSION_SUMMARY.md",
+    ORGANVM_ROOT / "etceter4-revival" / "OGOD.html",
+    ORGANVM_ROOT / "etceter4-revival" / "ogod-3d.html",
+    ORGANVM_ROOT / "etceter4-2011" / "PANTHEON_EXPANSION_SUMMARY.md",
+    ORGANVM_ROOT / "etceter4-2011" / "OGOD.html",
+    ORGANVM_ROOT / "chthon-oneiros" / "AGENTS.md",
+    ORGANVM_ROOT / "chthon-oneiros" / "docs" / "122325-asciiart-README.md",
+    ORGANVM_ROOT / "chthon-oneiros" / "release" / "week_03" / "met4morfoses_sync.md",
+    ORGANVM_ROOT / "chthon-oneiros" / "bible" / "core_loop.md",
+    ORGANVM_ROOT / "chthon-oneiros" / "research" / "world-09-screen-life.md",
+    ORGANVM_ROOT / "chthon-oneiros" / "research" / "world-10-args-immersive.md",
+    ORGANVM_ROOT
+    / "praxis-perpetua"
+    / "sessions"
+    / "gemini"
+    / "cli"
+    / "4jp"
+    / "2026-01-09--session-2026--prompts.md",
+    ORGANVM_ROOT / "recursive-engine--generative-entity" / "docs" / "source-materials" / "specs" / "grokking-algorithms-for-os.md",
 )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build ignored private prompt-lineage receipts for the triptych visual media canon."
+        description="Build ignored private prompt-lineage receipts for the triptych visual form canon."
     )
     parser.add_argument(
         "--sessions-root",
@@ -272,6 +371,14 @@ def cluster_order(cluster_id: str) -> int:
 def prompt_id(path: Path, line_number: int, text: str) -> str:
     digest = hashlib.sha1(f"{path}:{line_number}:{text}".encode("utf-8")).hexdigest()
     return digest[:16]
+
+
+def display_path(path: Path) -> str:
+    resolved = path.expanduser().resolve()
+    try:
+        return str(resolved.relative_to(ROOT))
+    except ValueError:
+        return str(resolved)
 
 
 def iter_session_prompts(session_paths: Iterable[Path]) -> Iterable[dict[str, Any]]:
@@ -346,8 +453,16 @@ def scan_document(path: Path) -> dict[str, Any] | None:
 def summarize(prompts: list[dict[str, Any]], documents: list[dict[str, Any]]) -> dict[str, Any]:
     clusters: list[dict[str, Any]] = []
     for cluster in CLUSTERS:
-        prompt_hits = [item for item in prompts if item["cluster"] == cluster.id]
-        doc_hits = [item for item in documents if item["cluster"] == cluster.id]
+        prompt_hits = [
+            item
+            for item in prompts
+            if cluster.id in item.get("project_overlap", [item["cluster"]])
+        ]
+        doc_hits = [
+            item
+            for item in documents
+            if cluster.id in item.get("project_overlap", [item["cluster"]])
+        ]
         all_prompt_dates = sorted(
             str(item.get("created_at")) for item in prompt_hits if item.get("created_at")
         )
@@ -373,7 +488,7 @@ def build_receipt(sessions_root: Path) -> dict[str, Any]:
     prompts = list(iter_session_prompts(session_paths))
     documents = [doc for path in DEFAULT_DOCUMENTS if (doc := scan_document(path)) is not None]
     return {
-        "schema": "triptych.visual-media-lineage.v1",
+        "schema": "triptych.visual-form-lineage.v1",
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "sessions_root": str(sessions_root.expanduser()),
         "session_files_scanned": len(session_paths),
@@ -392,7 +507,7 @@ def build_receipt(sessions_root: Path) -> dict[str, Any]:
 def write_markdown(receipt: dict[str, Any], path: Path) -> None:
     summary = receipt["summary"]
     lines = [
-        "# Visual Media Prompt Lineage",
+        "# Visual Form Prompt Lineage",
         "",
         "Private receipt. Raw excerpts and source paths must not be copied into tracked docs.",
         "",
@@ -401,9 +516,11 @@ def write_markdown(receipt: dict[str, Any], path: Path) -> None:
         f"- Session prompts matched: {summary['prompt_count']}",
         f"- Document evidence matched: {summary['document_count']}",
         "",
-        "## Cluster Summary",
+        "## Cluster Overlap Summary",
         "",
-        "| Cluster | Prompts | Docs | Date range | Promotion signal |",
+        "Prompts and documents can appear in more than one cluster.",
+        "",
+        "| Cluster | Prompt overlaps | Document overlaps | Date range | Promotion signal |",
         "| --- | ---: | ---: | --- | --- |",
     ]
     for cluster in summary["clusters"]:
@@ -443,7 +560,14 @@ def main() -> None:
     receipt = build_receipt(sessions_root)
     json_path = out_dir / "visual-media-lineage.json"
     md_path = out_dir / "visual-media-lineage.md"
-    json_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    visual_form_json_path = out_dir / "visual-form-lineage.json"
+    visual_form_md_path = out_dir / "visual-form-lineage.md"
+    rendered_json = json.dumps(receipt, indent=2, sort_keys=True) + "\n"
+    visual_form_json_path.write_text(rendered_json, encoding="utf-8")
+    write_markdown(receipt, visual_form_md_path)
+
+    # Compatibility receipts for earlier Visual Media Canon references.
+    json_path.write_text(rendered_json, encoding="utf-8")
     write_markdown(receipt, md_path)
 
     if args.json:
@@ -452,8 +576,10 @@ def main() -> None:
         summary = receipt["summary"]
         print(f"lineage prompts: {summary['prompt_count']}")
         print(f"lineage documents: {summary['document_count']}")
-        print(f"wrote {json_path.relative_to(ROOT)}")
-        print(f"wrote {md_path.relative_to(ROOT)}")
+        print(f"wrote {display_path(visual_form_json_path)}")
+        print(f"wrote {display_path(visual_form_md_path)}")
+        print(f"wrote compatibility {display_path(json_path)}")
+        print(f"wrote compatibility {display_path(md_path)}")
 
 
 if __name__ == "__main__":
