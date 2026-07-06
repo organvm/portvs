@@ -68,7 +68,8 @@ This avoids forcing one account to carry local social life, polished audiovisual
 
 - Pick the exact 15-45 second public Reel cut from `story-triptych.mp4` or regenerate a tighter cut.
 - Decide whether the first caption should use "Triptych" or preserve "Tryptich" as the historical spelling.
-- Run a low-rate ChatGPT follow-up for:
+- Restore or locate the manifested `session-meta/data/session-transcripts/chatgpt/` archive payload and scan it locally with the existing ChatGPT export/corpus adapters.
+- If the archive payload is unavailable, run a low-rate or browser-inspected ChatGPT follow-up for:
   - `Instagram Automation for Design`
   - `Podcasting and Comedy Struggles`
 - Confirm the audiovisual account handle before any public transfer.
@@ -80,6 +81,7 @@ Current local proof:
 
 ```bash
 ./account_excavation.py
+./account_excavation.py --skip-chatgpt
 python3 -m py_compile account_excavation.py
 ```
 

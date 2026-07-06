@@ -27,6 +27,9 @@ WORKSPACE_HOME = WORKTREE_ROOT.parents[3]
 DEFAULT_OUT_DIR = ROOT / "work" / "account-excavation-20260706"
 CHATGPT_APP_SUPPORT = Path.home() / "Library/Application Support/com.openai.chat"
 CCE_SRC = Path.home() / "Workspace/organvm-i-theoria/conversation-corpus-engine/src"
+SESSION_META_ROOT = Path.home() / "Workspace/session-meta"
+SESSION_META_MANIFEST = SESSION_META_ROOT / "ingest/manifest.jsonl"
+CHATGPT_ARCHIVE_ROOT = SESSION_META_ROOT / "data/session-transcripts/chatgpt"
 
 KEYWORDS = (
     "TripTicks",
@@ -82,7 +85,7 @@ DIRECTORY_TARGETS = (
 SEARCH_ROOTS = (
     {
         "id": "session_meta",
-        "path": Path.home() / "Workspace/session-meta",
+        "path": SESSION_META_ROOT,
         "max_hits": 80,
     },
     {
@@ -380,6 +383,128 @@ def high_signal_keywords(keywords: list[str]) -> list[str]:
     return [keyword for keyword in keywords if keyword not in LOW_SIGNAL_KEYWORDS]
 
 
+def chatgpt_local_method_receipt() -> list[dict[str, Any]]:
+    methods = [
+        {
+            "id": "session_meta_chatgpt_adapter",
+            "path": SESSION_META_ROOT / "ingest/adapters/chatgpt.py",
+            "purpose": "Parses native ChatGPT export JSON mapping trees into message atoms.",
+        },
+        {
+            "id": "cce_chatgpt_export_importer",
+            "path": CCE_SRC / "conversation_corpus_engine/import_chatgpt_export_corpus.py",
+            "purpose": "Imports a native ChatGPT export bundle into the conversation corpus.",
+        },
+        {
+            "id": "cce_chatgpt_local_session_importer",
+            "path": CCE_SRC / "conversation_corpus_engine/import_chatgpt_local_session_corpus.py",
+            "purpose": "Uses the desktop session cookie jar to fetch and import a local-session bundle.",
+        },
+        {
+            "id": "cce_chatgpt_local_session_client",
+            "path": CCE_SRC / "conversation_corpus_engine/chatgpt_local_session.py",
+            "purpose": "Discovers ChatGPT desktop auth/session state and backend conversation routes.",
+        },
+        {
+            "id": "chatgpt_exporter_to_bundle",
+            "path": Path.home()
+            / "Workspace/organvm-i-theoria/conversation-corpus-engine/scripts/chatgpt_exporter_to_bundle.py",
+            "purpose": "Converts ChatGPT-exporter output into the bundle shape used by the corpus importer.",
+        },
+    ]
+    return [
+        {
+            "id": method["id"],
+            "path": str(method["path"]),
+            "exists": method["path"].exists(),
+            "purpose": method["purpose"],
+        }
+        for method in methods
+    ]
+
+
+def chatgpt_archive_manifest_index(*, max_entries: int = 80) -> dict[str, Any]:
+    receipt: dict[str, Any] = {
+        "archive_root": str(CHATGPT_ARCHIVE_ROOT),
+        "archive_root_exists": CHATGPT_ARCHIVE_ROOT.exists(),
+        "manifest": str(SESSION_META_MANIFEST),
+        "manifest_exists": SESSION_META_MANIFEST.exists(),
+        "local_methods": chatgpt_local_method_receipt(),
+        "manifest_entries": 0,
+        "total_bytes": 0,
+        "by_lane": {},
+        "by_kind": {},
+        "by_format": {},
+        "important_entries": [],
+    }
+    if not SESSION_META_MANIFEST.exists():
+        receipt["status"] = "manifest-missing"
+        return receipt
+
+    important_patterns = (
+        "conversations.json",
+        "conversations.json.gz",
+        "conversations-",
+        "corpus/",
+        "threads-index",
+        "pairs-index",
+        "action-ledger",
+        "unresolved-ledger",
+    )
+    latest_mtime = ""
+    with SESSION_META_MANIFEST.open("r", encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            rel_path = str(row.get("path") or "")
+            if row.get("source") != "chatgpt" and not rel_path.startswith(
+                "data/session-transcripts/chatgpt/"
+            ):
+                continue
+            receipt["manifest_entries"] += 1
+            size = as_int(row.get("bytes")) or 0
+            receipt["total_bytes"] += size
+            lane = "root"
+            parts = Path(rel_path).parts
+            try:
+                idx = parts.index("chatgpt")
+                if len(parts) > idx + 1:
+                    lane = parts[idx + 1]
+            except ValueError:
+                pass
+            receipt["by_lane"][lane] = receipt["by_lane"].get(lane, 0) + 1
+            kind = str(row.get("klass") or "unknown")
+            fmt = str(row.get("fmt") or "unknown")
+            receipt["by_kind"][kind] = receipt["by_kind"].get(kind, 0) + 1
+            receipt["by_format"][fmt] = receipt["by_format"].get(fmt, 0) + 1
+            mtime = str(row.get("mtime") or "")
+            if mtime > latest_mtime:
+                latest_mtime = mtime
+            if len(receipt["important_entries"]) < max_entries and any(
+                pattern in rel_path for pattern in important_patterns
+            ):
+                actual_path = SESSION_META_ROOT / rel_path
+                receipt["important_entries"].append(
+                    {
+                        "path": rel_path,
+                        "bytes": size,
+                        "fmt": fmt,
+                        "kind": kind,
+                        "sha256": row.get("sha256"),
+                        "exists_in_checkout": actual_path.exists(),
+                    }
+                )
+
+    receipt["latest_mtime"] = latest_mtime or None
+    receipt["status"] = "ok"
+    receipt["manifest_only_in_this_checkout"] = (
+        receipt["manifest_entries"] > 0 and not CHATGPT_ARCHIVE_ROOT.exists()
+    )
+    return receipt
+
+
 def scan_chatgpt_details(
     *,
     conversations: list[dict[str, Any]],
@@ -667,6 +792,8 @@ def chatgpt_conversation_index(
         "scanned": detail_counts["scanned"],
         "matched": detail_counts["matched"],
         "high_signal_matched": detail_counts["high_signal_matched"],
+        "failed": detail_counts.get("failed", 0),
+        "rate_limited": detail_counts.get("rate_limited", 0),
     }
     receipt["global_conversations"] = chatgpt_global_conversation_index(
         session=session,
@@ -684,6 +811,7 @@ def write_markdown_summary(path: Path, receipt: dict[str, Any]) -> None:
     media = receipt["media_targets"]
     directories = receipt["directory_targets"]
     searches = receipt["search_roots"]
+    archive = receipt.get("chatgpt_archive") or {}
     chatgpt = receipt["chatgpt"]
     lines = [
         "# Account Excavation Receipt",
@@ -713,7 +841,18 @@ def write_markdown_summary(path: Path, receipt: dict[str, Any]) -> None:
             f"- `{root['path']}` - {root.get('status', 'unknown')}, "
             f"matches={root.get('match_count', 0)}"
         )
-    lines.extend(["", "## ChatGPT Local Project Index", ""])
+    lines.extend(["", "## ChatGPT Archive / Prior Local Methods", ""])
+    lines.append(
+        f"- archive root `{archive.get('archive_root')}` exists={archive.get('archive_root_exists')}"
+    )
+    lines.append(
+        f"- manifest entries={archive.get('manifest_entries', 0)}, "
+        f"manifest-only={archive.get('manifest_only_in_this_checkout')}"
+    )
+    lines.append(f"- lanes={json.dumps(archive.get('by_lane') or {}, sort_keys=True)}")
+    method_count = sum(1 for method in archive.get("local_methods", []) if method.get("exists"))
+    lines.append(f"- local method files present={method_count}/{len(archive.get('local_methods', []))}")
+    lines.extend(["", "## ChatGPT Live/App Index", ""])
     lines.append(
         f"- status={chatgpt.get('status')}, local project dirs={chatgpt.get('project_count', 0)}"
     )
@@ -722,7 +861,9 @@ def write_markdown_summary(path: Path, receipt: dict[str, Any]) -> None:
         lines.append(
             f"- detail scan={detail_scan.get('scanned', 0)}/{detail_scan.get('limit', 0)}, "
             f"matches={detail_scan.get('matched', 0)}, "
-            f"high-signal={detail_scan.get('high_signal_matched', 0)}"
+            f"high-signal={detail_scan.get('high_signal_matched', 0)}, "
+            f"failed={detail_scan.get('failed', 0)}, "
+            f"rate-limited={detail_scan.get('rate_limited', 0)}"
         )
     nonempty = [
         project
@@ -743,7 +884,9 @@ def write_markdown_summary(path: Path, receipt: dict[str, Any]) -> None:
             f"- global recent conversations={global_index.get('conversation_count_indexed', 0)}, "
             f"keyword matches={global_index.get('keyword_match_count', 0)}, "
             f"high-signal matches={global_index.get('high_signal_match_count', 0)}, "
-            f"detail scan={global_detail.get('scanned', 0)}/{global_detail.get('limit', 0)}"
+            f"detail scan={global_detail.get('scanned', 0)}/{global_detail.get('limit', 0)}, "
+            f"failed={global_detail.get('failed', 0)}, "
+            f"rate-limited={global_detail.get('rate_limited', 0)}"
         )
     lines.append("")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -771,6 +914,7 @@ def build_receipt(args: argparse.Namespace) -> dict[str, Any]:
             {"id": root["id"], **run_rg(root["path"], max_hits=root["max_hits"])}
             for root in SEARCH_ROOTS
         ],
+        "chatgpt_archive": chatgpt_archive_manifest_index(),
         "chatgpt": (
             {"status": "skipped", "reason": "--skip-chatgpt"}
             if args.skip_chatgpt

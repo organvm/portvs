@@ -8,7 +8,7 @@ work/account-excavation-20260706/account-excavation.json
 work/account-excavation-20260706/account-excavation.md
 ```
 
-Generated receipt: `2026-07-06T17:19:59Z`.
+Generated receipt: `2026-07-06T18:04:15Z`.
 
 ## Worktree Boundary
 
@@ -64,24 +64,62 @@ Broad match counts from the receipt:
 
 ## ChatGPT Local Status
 
-The ChatGPT local route is confirmed:
+Correction after re-checking the prior work: ChatGPT is not a fresh backend-only
+problem here. The local methods already exist.
+
+Present local method files:
+
+- `/Users/4jp/Workspace/session-meta/ingest/adapters/chatgpt.py` - parses native ChatGPT export JSON mapping trees.
+- `/Users/4jp/Workspace/organvm-i-theoria/conversation-corpus-engine/src/conversation_corpus_engine/import_chatgpt_export_corpus.py` - imports native ChatGPT export bundles.
+- `/Users/4jp/Workspace/organvm-i-theoria/conversation-corpus-engine/src/conversation_corpus_engine/import_chatgpt_local_session_corpus.py` - imports a desktop local-session bundle through the signed-in app session.
+- `/Users/4jp/Workspace/organvm-i-theoria/conversation-corpus-engine/src/conversation_corpus_engine/chatgpt_local_session.py` - discovers the desktop session and backend routes.
+- `/Users/4jp/Workspace/organvm-i-theoria/conversation-corpus-engine/scripts/chatgpt_exporter_to_bundle.py` - converts ChatGPT-exporter output into the importer bundle shape.
+
+The current `session-meta` checkout also has a manifest proving the prior
+ChatGPT archive/corpus existed:
+
+- Manifest: `/Users/4jp/Workspace/session-meta/ingest/manifest.jsonl`
+- Manifested ChatGPT entries: 2,709
+- Manifested bytes: 1,226,638,602
+- Lanes: `attachments` 2,685, `corpus` 14, plus import logs and metadata
+- Important manifested corpus files include `threads-index.json.gz`, `pairs-index.json.gz`, `action-ledger.json.gz`, and `unresolved-ledger.json.gz`
+- Important manifested transcript files include `attachments/conversations-000.json`, `conversations-001.json`, `conversations-003.json`, `conversations-006.json`, `conversations-007.json`, `conversations-011.json`, and more.
+
+But the payload tree is not present in this checkout:
+
+```text
+/Users/4jp/Workspace/session-meta/data/session-transcripts/chatgpt
+```
+
+So the right state is:
+
+- The local methods were built.
+- The archive is documented in the manifest.
+- The actual archive files are missing from this working checkout.
+- The live app/backend route is only a fallback or current-session supplement.
+
+The live desktop-app route is still confirmed:
 
 ```text
 https://chatgpt.com/backend-api/gizmos/<g-p-id>/conversations
 ```
 
-The receipt indexed:
+Earlier receipt runs indexed:
 
 - 79 local `project-g-p-*` directories from `~/Library/Application Support/com.openai.chat`
 - 20 non-empty project indexes
 - 126 recent global conversation rows
 
-Current caveat: recent global candidates with relevant titles were visible, but detail fetches hit ChatGPT `429` rate limiting during this run:
+The refreshed receipt skipped live backend calls to avoid more rate limiting.
+Earlier live runs found recent global candidates with relevant titles, but detail
+fetches hit ChatGPT `429` rate limiting:
 
 - `6a496695-3960-83ea-848e-2d6d33da4741` - `Instagram Automation for Design`
 - `6a44f315-2200-83ea-8807-99422496bce0` - `Podcasting and Comedy Struggles`
 
-Do not treat the ChatGPT excavation as complete until a later low-rate pass fetches those details or browser inspection confirms them.
+Do not treat the ChatGPT excavation as complete until either the manifested
+archive payload is restored into the checkout or a later low-rate/browser pass
+extracts those two live-session conversations.
 
 ## Account Architecture Recommendation
 
@@ -93,6 +131,7 @@ Do not treat the ChatGPT excavation as complete until a later low-rate pass fetc
 
 ## Next Excavation Gates
 
-1. Low-rate ChatGPT detail pass for the two recent global candidates above.
-2. Review the Claude desktop project hits only for high-signal terms, not generic `4444j99`.
-3. Inspect TripTicks against the existing `story-triptych.mp4` render and decide whether the first public post is a remake, an archival release, or a side-by-side origin/remake statement.
+1. Restore or locate the manifested ChatGPT archive payload for `data/session-transcripts/chatgpt/`; then scan the native export/corpus locally before any live backend call.
+2. If the payload is unavailable, run a low-rate or browser-inspected ChatGPT detail pass for the two recent global candidates above.
+3. Review the Claude desktop project hits only for high-signal terms, not generic `4444j99`.
+4. Inspect TripTicks against the existing `story-triptych.mp4` render and decide whether the first public post is a remake, an archival release, or a side-by-side origin/remake statement.
