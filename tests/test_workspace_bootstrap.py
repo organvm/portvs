@@ -19,6 +19,11 @@ JACK = ROOT / "jack.sh"
 BOOTSTRAP = ROOT / "runtime" / "workspace_bootstrap.py"
 MANIFEST = ROOT / "governance" / "workspace-manifest.yaml"
 REQUIREMENTS = ROOT / "requirements.txt"
+RECEIPT_DIR = ROOT / "docs" / "continuations" / "omega-substrate-literal"
+HISTORICAL_APPLY_RECEIPT = RECEIPT_DIR / "initial-bootstrap-apply-report.json"
+LIVE_APPLY_RECEIPT = RECEIPT_DIR / "live-bootstrap-apply-report.json"
+LIVE_PLAN_RECEIPT = RECEIPT_DIR / "live-bootstrap-report.json"
+LIVE_VERIFY_RECEIPT = RECEIPT_DIR / "live-bootstrap-verify-report.json"
 
 
 def _git(repo: Path, *args: str) -> None:
@@ -1084,3 +1089,645 @@ def test_sibling_compatibility_path_prefixes_remain_valid(
     assert {
         row["path"] for row in report["actions"] if row["operation"] == "symlink"
     } == set(paths)
+
+
+@pytest.mark.parametrize("probe", ["is_file", "read_bytes"])
+def test_manifest_filesystem_errors_are_structured_and_receipted(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    probe: str,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    receipt = tmp_path / "receipts" / f"manifest-{probe}.json"
+    injected = "host-private manifest failure"
+    if probe == "is_file":
+        real_is_file = Path.is_file
+
+        def guarded_is_file(path: Path) -> bool:
+            if path == manifest:
+                raise PermissionError(injected)
+            return real_is_file(path)
+
+        monkeypatch.setattr(Path, "is_file", guarded_is_file)
+    else:
+        real_read_bytes = Path.read_bytes
+
+        def guarded_read_bytes(path: Path) -> bytes:
+            if path == manifest:
+                raise PermissionError(injected)
+            return real_read_bytes(path)
+
+        monkeypatch.setattr(Path, "read_bytes", guarded_read_bytes)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(BOOTSTRAP),
+            "--manifest",
+            str(manifest),
+            "--root",
+            str(workspace),
+            "--plan",
+            "--json",
+            "--receipt",
+            str(receipt),
+        ],
+    )
+
+    assert workspace_bootstrap.main() == 1
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
+    stored = json.loads(receipt.read_text(encoding="utf-8"))
+    assert stored == report
+    assert report["error"].endswith("PermissionError")
+    assert injected not in json.dumps(report)
+    assert "Traceback" not in captured.err
+    assert not workspace.exists()
+
+
+def test_filesystem_root_is_rejected_before_apply(
+    tmp_path: Path,
+) -> None:
+    manifest, _, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    unique = f"portvs-root-guard-{os.getpid()}-{tmp_path.name}"
+    data["rows"] = [
+        {
+            "path": unique,
+            "kind": "structural",
+            "owner_ref": "portvs",
+            "residency": "structural",
+        }
+    ]
+    data["migration"]["compatibility_links"] = []
+    _write(manifest, data)
+    forbidden_target = Path("/") / unique
+    assert not forbidden_target.exists()
+    receipt = tmp_path / "receipts" / "root-guard.json"
+
+    proc = _run(
+        manifest,
+        Path("/"),
+        "--json",
+        "--receipt",
+        str(receipt),
+    )
+
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    assert "filesystem root" in report["error"]
+    assert json.loads(receipt.read_text(encoding="utf-8")) == report
+    assert "Traceback" not in proc.stderr
+    assert not forbidden_target.exists()
+
+
+def test_root_validation_rejects_home_ancestors_but_accepts_descendants(
+    tmp_path: Path,
+) -> None:
+    for unsafe in (Path.home(), Path.home().parent):
+        with pytest.raises(workspace_bootstrap.ContractError, match="home-directory"):
+            workspace_bootstrap.resolve_root(
+                {"workspace_root": str(unsafe)},
+                None,
+            )
+    safe = tmp_path / "Workspace"
+    assert (
+        workspace_bootstrap.resolve_root(
+            {"workspace_root": str(safe)},
+            None,
+        )
+        == safe
+    )
+
+
+def test_legacy_path_cannot_collide_with_a_later_managed_row(
+    tmp_path: Path,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    repository = next(row for row in data["rows"] if row["kind"] == "repository")
+    repository["legacy_paths"] = ["runtime/worktrees"]
+    _write(manifest, data)
+    receipt = tmp_path / "receipts" / "legacy-collision.json"
+
+    proc = _run(
+        manifest,
+        workspace,
+        "--plan",
+        "--json",
+        "--receipt",
+        str(receipt),
+    )
+
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    assert "legacy path collides with managed row runtime/worktrees" in report["error"]
+    assert json.loads(receipt.read_text(encoding="utf-8")) == report
+    assert "Traceback" not in proc.stderr
+    assert not workspace.exists()
+
+
+def _index_action_data() -> tuple[dict[str, object], workspace_bootstrap.Action]:
+    row = {
+        "path": "archive-index.json",
+        "kind": "index",
+        "source_ref": "https://example.invalid/archives",
+        "generator": "jack.sh --refresh-index",
+    }
+    return (
+        {"rows": [row]},
+        workspace_bootstrap.Action(
+            "write-index",
+            "archive-index.json",
+            str(row["source_ref"]),
+        ),
+    )
+
+
+def test_index_publication_partial_write_leaves_no_canonical_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "Workspace"
+    root.mkdir()
+    data, action = _index_action_data()
+    real_write = os.write
+    writes = 0
+
+    def partial_then_fail(fd: int, payload: bytes) -> int:
+        nonlocal writes
+        writes += 1
+        if writes == 1:
+            return real_write(fd, payload[: max(1, len(payload) // 2)])
+        raise OSError("host-private disk detail")
+
+    monkeypatch.setattr(workspace_bootstrap.os, "write", partial_then_fail)
+
+    with pytest.raises(workspace_bootstrap.ApplyError) as raised:
+        workspace_bootstrap.apply_actions(data, root, [action])
+
+    assert raised.value.applied == []
+    assert raised.value.failed_action == action
+    assert str(raised.value).endswith("OSError")
+    assert "host-private disk detail" not in str(raised.value)
+    assert not (root / action.path).exists()
+    assert list(root.glob(".archive-index.json.*.tmp")) == []
+
+
+def test_index_publication_race_never_replaces_the_winner(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "Workspace"
+    root.mkdir()
+    data, action = _index_action_data()
+    winner = b"race winner\n"
+
+    def racing_link(source: Path, destination: Path) -> None:
+        del source
+        Path(destination).write_bytes(winner)
+        raise FileExistsError("destination appeared")
+
+    monkeypatch.setattr(workspace_bootstrap.os, "link", racing_link)
+
+    with pytest.raises(workspace_bootstrap.ApplyError) as raised:
+        workspace_bootstrap.apply_actions(data, root, [action])
+
+    assert raised.value.applied == []
+    assert raised.value.failed_action == action
+    assert "bootstrap never overwrites" in str(raised.value)
+    assert (root / action.path).read_bytes() == winner
+    assert list(root.glob(".archive-index.json.*.tmp")) == []
+
+
+def test_index_publication_is_same_directory_and_durable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "Workspace"
+    root.mkdir()
+    data, action = _index_action_data()
+    real_mkstemp = workspace_bootstrap.tempfile.mkstemp
+    real_fsync = workspace_bootstrap.os.fsync
+    temp_directories: list[Path] = []
+    fsynced: list[int] = []
+
+    def observed_mkstemp(*args: object, **kwargs: object) -> tuple[int, str]:
+        temp_directories.append(Path(str(kwargs["dir"])))
+        return real_mkstemp(*args, **kwargs)
+
+    def observed_fsync(fd: int) -> None:
+        fsynced.append(fd)
+        real_fsync(fd)
+
+    monkeypatch.setattr(workspace_bootstrap.tempfile, "mkstemp", observed_mkstemp)
+    monkeypatch.setattr(workspace_bootstrap.os, "fsync", observed_fsync)
+
+    assert workspace_bootstrap.apply_actions(data, root, [action]) == [action]
+
+    target = root / action.path
+    assert target.read_bytes() == workspace_bootstrap._index_bytes(data["rows"][0])
+    assert temp_directories == [root]
+    assert len(fsynced) == 2
+    assert list(root.glob(".archive-index.json.*.tmp")) == []
+
+
+def test_unreadable_index_is_a_bounded_blocker_and_unmeasured_receipt(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    assert _run(manifest, workspace).returncode == 0
+    index = workspace / "library" / "underworld" / "archive-index.json"
+    receipt = tmp_path / "receipts" / "unreadable-index.json"
+    real_read_bytes = Path.read_bytes
+    injected = "host-private index failure"
+
+    def guarded_read_bytes(path: Path) -> bytes:
+        if path == index:
+            raise PermissionError(injected)
+        return real_read_bytes(path)
+
+    monkeypatch.setattr(Path, "read_bytes", guarded_read_bytes)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(BOOTSTRAP),
+            "--manifest",
+            str(manifest),
+            "--root",
+            str(workspace),
+            "--verify",
+            "--json",
+            "--receipt",
+            str(receipt),
+        ],
+    )
+
+    assert workspace_bootstrap.main() == 1
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
+    assert any(
+        row["path"] == "library/underworld/archive-index.json"
+        and row["detail"] == "index cannot be read: PermissionError"
+        for row in report["blockers"]
+    )
+    assert [
+        row
+        for row in report["failures"]
+        if row["path"] == "library/underworld/archive-index.json"
+        and row["operation"] == "verify-unmeasured"
+    ] == [
+        {
+            "detail": (
+                "index content cannot be read; parity is unmeasured: PermissionError"
+            ),
+            "operation": "verify-unmeasured",
+            "path": "library/underworld/archive-index.json",
+        }
+    ]
+    stored = json.loads(receipt.read_text(encoding="utf-8"))
+    assert any(
+        row["path"] == "library/underworld/archive-index.json"
+        and row["operation"] == "verify-unmeasured"
+        for row in stored["failures"]
+    )
+    assert injected not in json.dumps(report)
+    assert "Traceback" not in captured.err
+
+
+def test_resolution_runtime_error_is_structured_in_plan_and_verify(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    data["limits"]["max_compatibility_links"] = 1
+    data["migration"]["compatibility_links"] = [_compatibility_link("runtime-old")]
+    _write(manifest, data)
+    assert _run(manifest, workspace).returncode == 0
+    alias = workspace / "runtime-old"
+    receipt = tmp_path / "receipts" / "resolution-loop.json"
+    real_resolve = Path.resolve
+
+    def guarded_resolve(path: Path, strict: bool = False) -> Path:
+        if path == alias:
+            raise RuntimeError("host-private symlink loop")
+        return real_resolve(path, strict=strict)
+
+    monkeypatch.setattr(Path, "resolve", guarded_resolve)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(BOOTSTRAP),
+            "--manifest",
+            str(manifest),
+            "--root",
+            str(workspace),
+            "--verify",
+            "--json",
+            "--receipt",
+            str(receipt),
+        ],
+    )
+
+    assert workspace_bootstrap.main() == 1
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
+    assert any(
+        row["path"] == "runtime-old"
+        and row["detail"] == ("compatibility link cannot be resolved: RuntimeError")
+        for row in report["blockers"]
+    )
+    assert any(
+        row["path"] == "runtime-old"
+        and row["operation"] == "verify-unmeasured"
+        and row["detail"]
+        == ("compatibility link target cannot be resolved: RuntimeError")
+        for row in report["failures"]
+    )
+    stored = json.loads(receipt.read_text(encoding="utf-8"))
+    assert any(
+        row["path"] == "runtime-old" and row["operation"] == "verify-unmeasured"
+        for row in stored["failures"]
+    )
+    assert "host-private symlink loop" not in json.dumps(report)
+    assert "Traceback" not in captured.err
+
+
+def test_safe_destination_converts_resolution_runtime_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "Workspace"
+    root.mkdir()
+    loop = root / "loop"
+    loop.symlink_to(loop, target_is_directory=True)
+    real_resolve = Path.resolve
+
+    def guarded_resolve(path: Path, strict: bool = False) -> Path:
+        if path == loop:
+            raise RuntimeError("host-private symlink loop")
+        return real_resolve(path, strict=strict)
+
+    monkeypatch.setattr(Path, "resolve", guarded_resolve)
+
+    with pytest.raises(
+        workspace_bootstrap.ResolutionError,
+        match="symlink component cannot be resolved: RuntimeError",
+    ):
+        workspace_bootstrap._safe_destination(root, "loop/child")
+
+
+@pytest.mark.parametrize(
+    ("compatibility_path", "expected_kind"),
+    [
+        ("library/engine/organvm/tool/alias", "repository"),
+        ("runtime/worktrees/alias", "ephemeral"),
+        ("secrets/alias", "private"),
+        ("library/underworld/archive-index.json/alias", "index"),
+    ],
+)
+def test_compatibility_path_cannot_enter_non_structural_managed_interiors(
+    tmp_path: Path,
+    compatibility_path: str,
+    expected_kind: str,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    if expected_kind == "private":
+        data["rows"].append(
+            {
+                "path": "secrets",
+                "kind": "private",
+                "owner_ref": "private-inventory",
+                "residency": "private",
+                "custody_label": "workspace-private",
+                "sealed_inventory_ref": "receipt://sealed",
+                "restoration_receipt_ref": "receipt://restored",
+            }
+        )
+    data["migration"]["compatibility_links"] = [_compatibility_link(compatibility_path)]
+    _write(manifest, data)
+
+    proc = _run(manifest, workspace, "--plan", "--json")
+
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    assert f"beneath declared {expected_kind} row" in report["error"]
+    assert "Traceback" not in proc.stderr
+    assert not workspace.exists()
+
+
+@pytest.mark.parametrize("field", ["max_violations", "max_unmeasured"])
+def test_exact_convergence_limits_reject_nonzero_values(
+    tmp_path: Path,
+    field: str,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    data["limits"][field] = 1
+    _write(manifest, data)
+
+    proc = _run(manifest, workspace, "--plan", "--json")
+
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    assert report["error"] == (
+        f"limits.{field} must be 0 for exact Workspace convergence"
+    )
+    assert "Traceback" not in proc.stderr
+    assert not workspace.exists()
+
+
+def test_exact_convergence_limits_accept_zero(tmp_path: Path) -> None:
+    manifest, _, _ = _manifest(tmp_path)
+    data, _ = workspace_bootstrap.load_manifest(manifest)
+    assert data["limits"]["max_violations"] == 0
+    assert data["limits"]["max_unmeasured"] == 0
+
+
+@pytest.mark.parametrize(
+    "surface",
+    [
+        "row",
+        "compatibility_path",
+        "compatibility_target",
+    ],
+)
+def test_nul_paths_are_structured_contract_errors_without_root_creation(
+    tmp_path: Path,
+    surface: str,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    if surface == "row":
+        data["rows"][0]["path"] = "bad\0name"
+    else:
+        link = _compatibility_link("runtime-old")
+        field = "path" if surface == "compatibility_path" else "target"
+        link[field] = f"bad\0{field}"
+        data["migration"]["compatibility_links"] = [link]
+    _write(manifest, data)
+    receipt = tmp_path / "receipts" / f"nul-{surface}.json"
+
+    proc = _run(
+        manifest,
+        workspace,
+        "--json",
+        "--receipt",
+        str(receipt),
+    )
+
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    assert "invalid relative path" in report["error"]
+    assert json.loads(receipt.read_text(encoding="utf-8")) == report
+    assert "Traceback" not in proc.stderr
+    assert not workspace.exists()
+
+
+@pytest.mark.parametrize("stage", ["directory", "open", "write"])
+def test_receipt_preflight_failure_prevents_apply_mutations(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    stage: str,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    receipt = tmp_path / f"receipts-{stage}" / "preflight.json"
+    real_mkdir = Path.mkdir
+    real_mkstemp = workspace_bootstrap.tempfile.mkstemp
+    real_write = workspace_bootstrap.os.write
+
+    def guarded_mkdir(path: Path, *args: object, **kwargs: object) -> None:
+        if stage == "directory" and path == receipt.parent:
+            raise PermissionError("host-private receipt directory")
+        real_mkdir(path, *args, **kwargs)
+
+    def preflight_failure(*args: object, **kwargs: object) -> tuple[int, str]:
+        if stage == "open" and ".preflight-" in str(kwargs.get("prefix")):
+            raise PermissionError("host-private receipt preflight")
+        return real_mkstemp(*args, **kwargs)
+
+    def guarded_write(fd: int, payload: bytes) -> int:
+        if stage == "write" and payload.startswith(b"portvs receipt preflight"):
+            raise PermissionError("host-private receipt write")
+        return real_write(fd, payload)
+
+    monkeypatch.setattr(Path, "mkdir", guarded_mkdir)
+    monkeypatch.setattr(workspace_bootstrap.tempfile, "mkstemp", preflight_failure)
+    monkeypatch.setattr(workspace_bootstrap.os, "write", guarded_write)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(BOOTSTRAP),
+            "--manifest",
+            str(manifest),
+            "--root",
+            str(workspace),
+            "--json",
+            "--receipt",
+            str(receipt),
+        ],
+    )
+
+    assert workspace_bootstrap.main() == 1
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
+    assert report["error"] == "receipt preflight failed: PermissionError"
+    assert "host-private receipt preflight" not in json.dumps(report)
+    assert "Traceback" not in captured.err
+    assert not workspace.exists()
+    assert not receipt.exists()
+
+
+def test_receipt_write_race_preserves_post_apply_evidence_in_stdout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    receipt = tmp_path / "receipts" / "write-race.json"
+    real_write_text = Path.write_text
+
+    def guarded_write_text(
+        path: Path,
+        data: str,
+        encoding: str | None = None,
+        errors: str | None = None,
+        newline: str | None = None,
+    ) -> int:
+        if path == receipt:
+            raise PermissionError("host-private receipt race")
+        return real_write_text(
+            path,
+            data,
+            encoding=encoding,
+            errors=errors,
+            newline=newline,
+        )
+
+    monkeypatch.setattr(Path, "write_text", guarded_write_text)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(BOOTSTRAP),
+            "--manifest",
+            str(manifest),
+            "--root",
+            str(workspace),
+            "--json",
+            "--receipt",
+            str(receipt),
+        ],
+    )
+
+    assert workspace_bootstrap.main() == 1
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
+    assert report["ok"] is False
+    assert report["error"] == "receipt write failed: PermissionError"
+    assert report["receipt_error"] == report["error"]
+    assert report["applied"]
+    assert "host-private receipt race" not in json.dumps(report)
+    assert "Traceback" not in captured.err
+    assert workspace.is_dir()
+    assert (workspace / "library" / "underworld" / "archive-index.json").is_file()
+    assert not receipt.exists()
+
+
+def test_checked_apply_receipts_distinguish_historical_and_current_evidence() -> None:
+    manifest_digest = hashlib.sha256(MANIFEST.read_bytes()).hexdigest()
+    historical = json.loads(HISTORICAL_APPLY_RECEIPT.read_text(encoding="utf-8"))
+    current = json.loads(LIVE_APPLY_RECEIPT.read_text(encoding="utf-8"))
+    plan = json.loads(LIVE_PLAN_RECEIPT.read_text(encoding="utf-8"))
+    verified = json.loads(LIVE_VERIFY_RECEIPT.read_text(encoding="utf-8"))
+
+    assert historical["mode"] == "apply"
+    assert historical["applied"]
+    assert historical["manifest_sha256"] != manifest_digest
+    assert current["mode"] == "apply"
+    assert current["manifest_sha256"] == manifest_digest
+    assert current["actions"] == []
+    assert current["applied"] == []
+    assert current["blockers"] == plan["blockers"]
+    assert plan["actions"] == []
+    assert {
+        current["manifest_sha256"],
+        plan["manifest_sha256"],
+        verified["manifest_sha256"],
+    } == {manifest_digest}
+
+
+def test_jack_has_one_final_newline_without_a_blank_line() -> None:
+    content = JACK.read_bytes()
+    assert content.endswith(b'"$@"\n')
+    assert not content.endswith(b"\n\n")

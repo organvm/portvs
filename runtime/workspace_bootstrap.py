@@ -19,6 +19,7 @@ from pathlib import Path, PurePosixPath
 import stat
 import subprocess
 import sys
+import tempfile
 from typing import Any, Mapping
 from urllib.parse import urlparse
 
@@ -39,6 +40,16 @@ CLONE_TIMEOUT_SECONDS = 600
 
 class ContractError(ValueError):
     pass
+
+
+class ResolutionError(ContractError):
+    pass
+
+
+class IndexPublicationError(ContractError):
+    def __init__(self, message: str, *, published: bool) -> None:
+        super().__init__(message)
+        self.published = published
 
 
 class ApplyError(ContractError):
@@ -64,7 +75,12 @@ class Action:
 
 
 def _safe_path(value: object) -> str:
-    if not isinstance(value, str) or not value.strip() or "\\" in value:
+    if (
+        not isinstance(value, str)
+        or not value.strip()
+        or "\\" in value
+        or "\0" in value
+    ):
         raise ContractError(f"invalid relative path: {value!r}")
     pure = PurePosixPath(value)
     if pure.is_absolute() or any(part in {"", ".", ".."} for part in pure.parts):
@@ -95,14 +111,23 @@ def _parse_deadline(value: object, label: str) -> datetime:
 
 
 def load_manifest(path: Path) -> tuple[dict[str, Any], bytes]:
-    if not path.is_file():
+    try:
+        is_file = path.is_file()
+    except OSError as exc:
+        raise ContractError(
+            f"manifest availability cannot be measured: {type(exc).__name__}"
+        ) from exc
+    if not is_file:
         raise ContractError(f"manifest missing: {path}")
     if yaml is None:
         raise ContractError(
             "PyYAML 6.0.3 is required; install the locked runtime dependency with "
             "`python3 -m pip install --require-hashes -r requirements.txt`"
         )
-    raw = path.read_bytes()
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise ContractError(f"manifest cannot be read: {type(exc).__name__}") from exc
     try:
         data = yaml.safe_load(raw) or {}
     except yaml.YAMLError as exc:
@@ -166,6 +191,13 @@ def load_manifest(path: Path) -> tuple[dict[str, Any], bytes]:
             raise ContractError(
                 f"{rel}: parent {parent_rel} must be a structural container"
             )
+    for rel, row in row_by_path.items():
+        for legacy in row.get("legacy_paths") or []:
+            legacy_rel = _safe_path(legacy)
+            if legacy_rel in row_by_path:
+                raise ContractError(
+                    f"{rel}: legacy path collides with managed row {legacy_rel}"
+                )
     limits = data.get("limits")
     if not isinstance(limits, dict):
         raise ContractError("limits must be a mapping")
@@ -184,6 +216,11 @@ def load_manifest(path: Path) -> tuple[dict[str, Any], bytes]:
         value = limits.get(field)
         if not isinstance(value, int) or isinstance(value, bool) or value < 0:
             raise ContractError(f"limits.{field} must be a non-negative integer")
+    for field in ("max_violations", "max_unmeasured"):
+        if limits[field] != 0:
+            raise ContractError(
+                f"limits.{field} must be 0 for exact Workspace convergence"
+            )
     migration = data.get("migration") or {}
     if not isinstance(migration, dict):
         raise ContractError("migration must be a mapping")
@@ -213,6 +250,16 @@ def load_manifest(path: Path) -> tuple[dict[str, Any], bytes]:
             raise ContractError(
                 f"{rel}: compatibility path collides with a manifest row"
             )
+        ancestor = rel_path.parent
+        while str(ancestor) != ".":
+            ancestor_rel = ancestor.as_posix()
+            ancestor_row = row_by_path.get(ancestor_rel)
+            if ancestor_row is not None and ancestor_row["kind"] != "structural":
+                raise ContractError(
+                    f"{rel}: compatibility path cannot be beneath declared "
+                    f"{ancestor_row['kind']} row {ancestor_rel}"
+                )
+            ancestor = ancestor.parent
         target_row = row_by_path.get(target_rel)
         if target_row is None or target_row["kind"] not in DIRECTORY_KINDS:
             raise ContractError(
@@ -232,7 +279,18 @@ def resolve_root(data: Mapping[str, Any], override: Path | None) -> Path:
         root = Path(os.path.expandvars(value)).expanduser()
     if not root.is_absolute():
         raise ContractError(f"workspace root must be absolute: {root}")
-    return Path(os.path.abspath(root))
+    normalized = Path(os.path.abspath(root))
+    home = Path.home()
+    if (
+        normalized == Path(normalized.anchor)
+        or normalized == home
+        or normalized in home.parents
+    ):
+        raise ContractError(
+            "workspace root must not be a filesystem root, home directory, "
+            "or home-directory ancestor"
+        )
+    return normalized
 
 
 def _inside(path: Path, root: Path) -> bool:
@@ -255,7 +313,12 @@ def _safe_destination(
         if cursor.is_symlink():
             if is_final and allow_final_symlink:
                 continue
-            target = cursor.resolve(strict=False)
+            try:
+                target = cursor.resolve(strict=False)
+            except (OSError, RuntimeError) as exc:
+                raise ResolutionError(
+                    f"{rel}: symlink component cannot be resolved: {type(exc).__name__}"
+                ) from exc
             if not _inside(target, root):
                 raise ContractError(
                     f"{rel}: symlink component escapes Workspace: {cursor}"
@@ -284,6 +347,61 @@ def _index_bytes(row: Mapping[str, Any]) -> bytes:
         )
         + "\n"
     ).encode()
+
+
+def _publish_index_no_replace(path: Path, payload: bytes, rel: str) -> None:
+    fd: int | None = None
+    temp_path: Path | None = None
+    published = False
+    try:
+        try:
+            fd, temp_name = tempfile.mkstemp(
+                prefix=f".{path.name}.",
+                suffix=".tmp",
+                dir=path.parent,
+            )
+            temp_path = Path(temp_name)
+            offset = 0
+            while offset < len(payload):
+                written = os.write(fd, payload[offset:])
+                if written <= 0:
+                    raise OSError("index publication made no write progress")
+                offset += written
+            os.fchmod(fd, 0o644)
+            os.fsync(fd)
+            os.close(fd)
+            fd = None
+            try:
+                os.link(temp_path, path)
+            except FileExistsError as exc:
+                raise IndexPublicationError(
+                    f"{rel}: index appeared during publication; "
+                    "bootstrap never overwrites",
+                    published=False,
+                ) from exc
+            published = True
+            temp_path.unlink()
+            temp_path = None
+            directory_fd = os.open(
+                path.parent,
+                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0),
+            )
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        finally:
+            if fd is not None:
+                os.close(fd)
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
+    except IndexPublicationError:
+        raise
+    except OSError as exc:
+        raise IndexPublicationError(
+            f"{rel}: index publication failed: {type(exc).__name__}",
+            published=published,
+        ) from exc
 
 
 def _canonical_remote(value: str) -> str:
@@ -413,17 +531,30 @@ def plan(data: Mapping[str, Any], root: Path) -> tuple[list[Action], list[Action
                         Action("blocked", rel, "index path is not a physical file")
                     )
                     canonical_status[rel] = False
-                elif path.read_bytes() != desired:
-                    blockers.append(
-                        Action(
-                            "blocked",
-                            rel,
-                            "existing index differs; bootstrap never overwrites",
-                        )
-                    )
-                    canonical_status[rel] = False
                 else:
-                    canonical_status[rel] = True
+                    try:
+                        existing = path.read_bytes()
+                    except OSError as exc:
+                        blockers.append(
+                            Action(
+                                "blocked",
+                                rel,
+                                f"index cannot be read: {type(exc).__name__}",
+                            )
+                        )
+                        canonical_status[rel] = False
+                    else:
+                        if existing != desired:
+                            blockers.append(
+                                Action(
+                                    "blocked",
+                                    rel,
+                                    "existing index differs; bootstrap never overwrites",
+                                )
+                            )
+                            canonical_status[rel] = False
+                        else:
+                            canonical_status[rel] = True
             else:
                 actions.append(Action("write-index", rel, str(row["source_ref"])))
                 canonical_status[rel] = True
@@ -495,9 +626,7 @@ def plan(data: Mapping[str, Any], root: Path) -> tuple[list[Action], list[Action
             )
             continue
         if path.exists() or path.is_symlink():
-            if not path.is_symlink() or path.resolve(strict=False) != target.resolve(
-                strict=False
-            ):
+            if not path.is_symlink():
                 blockers.append(
                     Action(
                         "blocked",
@@ -506,7 +635,29 @@ def plan(data: Mapping[str, Any], root: Path) -> tuple[list[Action], list[Action
                     )
                 )
             else:
-                compatibility_candidates.append(("existing", rel, target_rel))
+                try:
+                    link_target = path.resolve(strict=False)
+                    canonical_target = target.resolve(strict=False)
+                except (OSError, RuntimeError) as exc:
+                    blockers.append(
+                        Action(
+                            "blocked",
+                            rel,
+                            "compatibility link cannot be resolved: "
+                            f"{type(exc).__name__}",
+                        )
+                    )
+                else:
+                    if link_target != canonical_target:
+                        blockers.append(
+                            Action(
+                                "blocked",
+                                rel,
+                                f"occupied compatibility path; target is {target_rel}",
+                            )
+                        )
+                    else:
+                        compatibility_candidates.append(("existing", rel, target_rel))
         else:
             compatibility_candidates.append(("absent", rel, target_rel))
 
@@ -564,7 +715,11 @@ def apply_actions(
             elif action.operation == "chmod-private":
                 path.chmod(0o700)
             elif action.operation == "write-index":
-                path.write_bytes(_index_bytes(rows[action.path]))
+                _publish_index_no_replace(
+                    path,
+                    _index_bytes(rows[action.path]),
+                    action.path,
+                )
             elif action.operation == "clone":
                 row = rows[action.path]
                 command = ["git", "clone", "--origin", "origin"]
@@ -606,6 +761,8 @@ def apply_actions(
                 raise ContractError(f"unsupported action: {action.operation}")
             applied.append(action)
         except (ContractError, OSError) as exc:
+            if isinstance(exc, IndexPublicationError) and exc.published:
+                applied.append(action)
             raise ApplyError(str(exc), applied, action) from exc
     return applied
 
@@ -629,6 +786,9 @@ def verify(data: Mapping[str, Any], root: Path) -> list[Action]:
             continue
         try:
             safe_paths[rel] = _safe_destination(root, rel)
+        except ResolutionError as exc:
+            unsafe[rel] = str(exc)
+            failures.append(Action("verify-unmeasured", rel, str(exc)))
         except ContractError as exc:
             unsafe[rel] = str(exc)
             failures.append(Action("verify-fail", rel, str(exc)))
@@ -642,6 +802,9 @@ def verify(data: Mapping[str, Any], root: Path) -> list[Action]:
         target_rel = _safe_path(row["target"])
         try:
             path = _safe_destination(root, rel, allow_final_symlink=True)
+        except ResolutionError as exc:
+            failures.append(Action("verify-unmeasured", rel, str(exc)))
+            continue
         except ContractError as exc:
             failures.append(Action("verify-fail", rel, str(exc)))
             continue
@@ -658,6 +821,9 @@ def verify(data: Mapping[str, Any], root: Path) -> list[Action]:
             continue
         try:
             target = _safe_destination(root, target_rel)
+        except ResolutionError as exc:
+            failures.append(Action("verify-unmeasured", rel, str(exc)))
+            continue
         except ContractError as exc:
             failures.append(Action("verify-fail", rel, str(exc)))
             continue
@@ -685,7 +851,7 @@ def verify(data: Mapping[str, Any], root: Path) -> list[Action]:
         except (OSError, RuntimeError) as exc:
             failures.append(
                 Action(
-                    "verify-fail",
+                    "verify-unmeasured",
                     rel,
                     f"compatibility link target cannot be resolved: {type(exc).__name__}",
                 )
@@ -738,6 +904,9 @@ def verify(data: Mapping[str, Any], root: Path) -> list[Action]:
         else:
             try:
                 parent = _safe_destination(root, parent_rel)
+            except ResolutionError as exc:
+                failures.append(Action("verify-unmeasured", parent_rel, str(exc)))
+                continue
             except ContractError:
                 continue
         if not parent.is_dir() or parent.is_symlink():
@@ -798,10 +967,32 @@ def verify(data: Mapping[str, Any], root: Path) -> list[Action]:
             failures.append(
                 Action("verify-fail", rel, "private container mode is not 0700")
             )
-        elif row["kind"] == "index" and (not path.is_file() or path.is_symlink()):
-            failures.append(
-                Action("verify-fail", rel, "declared index is not a physical file")
-            )
+        elif row["kind"] == "index":
+            if not path.is_file() or path.is_symlink():
+                failures.append(
+                    Action("verify-fail", rel, "declared index is not a physical file")
+                )
+            else:
+                try:
+                    existing = path.read_bytes()
+                except OSError as exc:
+                    failures.append(
+                        Action(
+                            "verify-unmeasured",
+                            rel,
+                            "index content cannot be read; parity is unmeasured: "
+                            f"{type(exc).__name__}",
+                        )
+                    )
+                else:
+                    if existing != _index_bytes(row):
+                        failures.append(
+                            Action(
+                                "verify-fail",
+                                rel,
+                                "declared index content differs from the manifest",
+                            )
+                        )
         elif row["kind"] == "repository" and not _repo_matches(path, row):
             failures.append(
                 Action(
@@ -890,6 +1081,73 @@ def _prepare_receipt_report(
     )
 
 
+def _preflight_receipt(path: Path) -> None:
+    fd: int | None = None
+    probe_path: Path | None = None
+    try:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if path.exists() or path.is_symlink():
+                if not path.is_file():
+                    raise ContractError(
+                        "receipt destination must be a file when it already exists"
+                    )
+                with path.open("rb") as existing:
+                    existing.read(1)
+            fd, probe_name = tempfile.mkstemp(
+                prefix=f".{path.name}.preflight-",
+                suffix=".tmp",
+                dir=path.parent,
+            )
+            probe_path = Path(probe_name)
+            payload = b"portvs receipt preflight\n"
+            offset = 0
+            while offset < len(payload):
+                written = os.write(fd, payload[offset:])
+                if written <= 0:
+                    raise OSError("receipt preflight made no write progress")
+                offset += written
+            os.fsync(fd)
+            os.close(fd)
+            fd = None
+            probe_path.unlink()
+            probe_path = None
+            directory_fd = os.open(
+                path.parent,
+                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0),
+            )
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        finally:
+            if fd is not None:
+                os.close(fd)
+            if probe_path is not None:
+                probe_path.unlink(missing_ok=True)
+    except ContractError:
+        raise
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise ContractError(f"receipt preflight failed: {type(exc).__name__}") from exc
+
+
+def _persist_receipt(
+    path: Path,
+    report: Mapping[str, Any],
+    root: Path | None,
+) -> None:
+    receipt_report = _prepare_receipt_report(report, root)
+    rendered = json.dumps(receipt_report, indent=2, sort_keys=True) + "\n"
+    rendered_size = len(rendered.encode("utf-8"))
+    if (
+        path.exists()
+        and path.stat().st_size == rendered_size
+        and path.read_text(encoding="utf-8") == rendered
+    ):
+        return
+    path.write_text(rendered, encoding="utf-8")
+
+
 def render(report: Mapping[str, Any]) -> str:
     lines = [
         f"jack: {report['mode']} {'OK' if report['ok'] else 'BLOCKED'}",
@@ -935,7 +1193,11 @@ def main() -> int:
     failures: list[Action] = []
     root: Path | None = None
     raw: bytes | None = None
+    receipt_preflighted = False
     try:
+        if args.receipt:
+            _preflight_receipt(args.receipt)
+            receipt_preflighted = True
         data, raw = load_manifest(manifest)
         root = resolve_root(data, args.root)
         actions, blockers = plan(data, root)
@@ -980,15 +1242,17 @@ def main() -> int:
             "ok": False,
             "error": str(exc),
         }
-    if args.receipt:
-        args.receipt.parent.mkdir(parents=True, exist_ok=True)
-        receipt_report = _prepare_receipt_report(report, root)
-        rendered = json.dumps(receipt_report, indent=2, sort_keys=True) + "\n"
-        if (
-            not args.receipt.exists()
-            or args.receipt.read_text(encoding="utf-8") != rendered
-        ):
-            args.receipt.write_text(rendered, encoding="utf-8")
+    if args.receipt and receipt_preflighted:
+        try:
+            _persist_receipt(args.receipt, report, root)
+        except (OSError, RuntimeError, ValueError) as exc:
+            receipt_error = f"receipt write failed: {type(exc).__name__}"
+            report = {
+                **report,
+                "ok": False,
+                "receipt_error": receipt_error,
+            }
+            report.setdefault("error", receipt_error)
     print(
         json.dumps(report, indent=2, sort_keys=True)
         if args.json

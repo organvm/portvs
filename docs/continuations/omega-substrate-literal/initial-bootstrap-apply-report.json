@@ -1,6 +1,27 @@
 {
   "actions": [],
-  "applied": [],
+  "applied": [
+    {
+      "detail": "set declared private container mode to 0700",
+      "operation": "chmod-private",
+      "path": "private/finance"
+    },
+    {
+      "detail": "set declared private container mode to 0700",
+      "operation": "chmod-private",
+      "path": "private/health"
+    },
+    {
+      "detail": "set declared private container mode to 0700",
+      "operation": "chmod-private",
+      "path": "private/life"
+    },
+    {
+      "detail": "set declared private container mode to 0700",
+      "operation": "chmod-private",
+      "path": "private/people"
+    }
+  ],
   "blockers": [
     {
       "detail": "legacy source present; preserve/rehome it before hydration: domus-genoma",
@@ -8,7 +29,7 @@
       "path": "library/engine/organvm/domus-genoma"
     },
     {
-      "detail": "existing path is not the declared repository",
+      "detail": "legacy source present; preserve/rehome it before hydration: limen",
       "operation": "blocked",
       "path": "library/engine/organvm/limen"
     },
@@ -58,9 +79,8 @@
       "path": "4444J99/portvs"
     }
   ],
-  "failure_count": 0,
   "failures": [],
-  "manifest_sha256": "55e87b1d7343a037b58e36a9d709cd4f8354dada784a80ca680bafacb3250d09",
+  "manifest_sha256": "7824e42a1e41044e19080a1439dd56b7bcee3f8b6c646b1b635ca2afaa4255b4",
   "mode": "apply",
   "ok": false,
   "schema": "portvs.workspace_bootstrap_report.v1",
