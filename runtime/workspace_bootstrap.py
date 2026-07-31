@@ -34,6 +34,7 @@ SCHEMA = "portvs.workspace_manifest.v1"
 REPORT_SCHEMA = "portvs.workspace_bootstrap_report.v1"
 KINDS = {"structural", "repository", "private", "ephemeral", "index"}
 DIRECTORY_KINDS = {"structural", "repository", "private", "ephemeral"}
+CLONE_TIMEOUT_SECONDS = 600
 
 
 class ContractError(ValueError):
@@ -68,7 +69,7 @@ def _safe_path(value: object) -> str:
     pure = PurePosixPath(value)
     if pure.is_absolute() or any(part in {"", ".", ".."} for part in pure.parts):
         raise ContractError(f"unsafe relative path: {value!r}")
-    if pure.as_posix() != value.rstrip("/"):
+    if pure.as_posix() != value:
         raise ContractError(f"non-normalized relative path: {value!r}")
     return pure.as_posix()
 
@@ -465,6 +466,7 @@ def plan(data: Mapping[str, Any], root: Path) -> tuple[list[Action], list[Action
                 canonical_status[rel] = True
 
     migration = data.get("migration") or {}
+    compatibility_candidates: list[tuple[str, str, str]] = []
     for row in migration.get("compatibility_links") or []:
         rel = _safe_path(row["path"])
         target_rel = _safe_path(row["target"])
@@ -503,13 +505,38 @@ def plan(data: Mapping[str, Any], root: Path) -> tuple[list[Action], list[Action
                         f"occupied compatibility path; target is {target_rel}",
                     )
                 )
+            else:
+                compatibility_candidates.append(("existing", rel, target_rel))
         else:
+            compatibility_candidates.append(("absent", rel, target_rel))
+
+    max_compatibility_links = int(data["limits"]["max_compatibility_links"])
+    existing_links = sum(
+        state == "existing" for state, _, _ in compatibility_candidates
+    )
+    remaining_links = max(0, max_compatibility_links - existing_links)
+    accepted_existing = 0
+    for state, rel, target_rel in compatibility_candidates:
+        if state == "existing":
+            accepted_existing += 1
+            if accepted_existing <= max_compatibility_links:
+                continue
+        elif remaining_links:
             actions.append(Action("symlink", rel, target_rel))
+            remaining_links -= 1
+            continue
+        blockers.append(
+            Action(
+                "blocked",
+                rel,
+                f"compatibility link limit exceeded: {max_compatibility_links} allowed",
+            )
+        )
     return actions, blockers
 
 
 def _row_by_path(data: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
-    return {str(row["path"]): row for row in data["rows"]}
+    return {_safe_path(row["path"]): row for row in data["rows"]}
 
 
 def apply_actions(
@@ -544,9 +571,24 @@ def apply_actions(
                 if branch := row.get("default_branch"):
                     command.extend(["--branch", str(branch), "--single-branch"])
                 command.extend([str(row["remote"]), str(path)])
-                proc = subprocess.run(
-                    command, capture_output=True, text=True, check=False
-                )
+                try:
+                    proc = subprocess.run(
+                        command,
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                        timeout=CLONE_TIMEOUT_SECONDS,
+                        env={
+                            **os.environ,
+                            "GIT_TERMINAL_PROMPT": "0",
+                            "GIT_ASKPASS": "",
+                            "SSH_ASKPASS": "",
+                            "GCM_INTERACTIVE": "Never",
+                            "GIT_OPTIONAL_LOCKS": "0",
+                        },
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    raise ContractError(f"{action.path}: clone timed out") from exc
                 if proc.returncode != 0:
                     raise ContractError(
                         f"{action.path}: clone failed: {proc.stderr.strip()[:500]}"
@@ -781,6 +823,73 @@ def verify(data: Mapping[str, Any], root: Path) -> list[Action]:
     return failures
 
 
+def _aggregate_undeclared_failures(
+    failures: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    preserved: list[dict[str, Any]] = []
+    child_names_by_parent: dict[str, list[str]] = {}
+    for row in failures:
+        if (
+            row.get("operation") != "verify-fail"
+            or row.get("detail") != "undeclared structural entry"
+        ):
+            preserved.append(dict(row))
+            continue
+        path = PurePosixPath(str(row["path"]))
+        parent = path.parent.as_posix()
+        child_names_by_parent.setdefault(parent, []).append(path.name)
+
+    for parent in sorted(child_names_by_parent):
+        child_names = sorted(child_names_by_parent[parent])
+        digest_input = json.dumps(
+            child_names,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        preserved.append(
+            {
+                "operation": "verify-fail",
+                "path": parent,
+                "detail": "undeclared structural entries aggregated",
+                "count": len(child_names),
+                "child_names_sha256": hashlib.sha256(digest_input).hexdigest(),
+            }
+        )
+    return preserved
+
+
+def _sanitize_receipt_value(
+    value: Any,
+    workspace_root: str | None,
+) -> Any:
+    if isinstance(value, str):
+        if workspace_root is None:
+            return value
+        return value.replace(workspace_root, "$WORKSPACE_ROOT")
+    if isinstance(value, Mapping):
+        return {
+            key: _sanitize_receipt_value(nested, workspace_root)
+            for key, nested in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [_sanitize_receipt_value(nested, workspace_root) for nested in value]
+    return value
+
+
+def _prepare_receipt_report(
+    report: Mapping[str, Any],
+    root: Path | None,
+) -> dict[str, Any]:
+    receipt_report = dict(report)
+    failures = report.get("failures")
+    if isinstance(failures, list):
+        receipt_report.setdefault("failure_count", len(failures))
+        receipt_report["failures"] = _aggregate_undeclared_failures(failures)
+    return _sanitize_receipt_value(
+        receipt_report,
+        str(root) if root is not None else None,
+    )
+
+
 def render(report: Mapping[str, Any]) -> str:
     lines = [
         f"jack: {report['mode']} {'OK' if report['ok'] else 'BLOCKED'}",
@@ -873,9 +982,7 @@ def main() -> int:
         }
     if args.receipt:
         args.receipt.parent.mkdir(parents=True, exist_ok=True)
-        receipt_report = dict(report)
-        if "workspace_root" in receipt_report:
-            receipt_report["workspace_root"] = "$WORKSPACE_ROOT"
+        receipt_report = _prepare_receipt_report(report, root)
         rendered = json.dumps(receipt_report, indent=2, sort_keys=True) + "\n"
         if (
             not args.receipt.exists()

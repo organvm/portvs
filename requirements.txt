@@ -1,4 +1,6 @@
-# Runtime dependency for jack.sh. Install reproducibly with:
+# Runtime dependency for jack.sh. This lock intentionally permits only the
+# audited source distribution, not platform-specific wheels. Install with:
 # python3 -m pip install --require-hashes -r requirements.txt
+--no-binary=PyYAML
 PyYAML==6.0.3 \
     --hash=sha256:d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f

@@ -8,7 +8,8 @@ limits:
   max_scan_entries: 250000
   max_violations: 0
   max_unmeasured: 0
-  max_compatibility_links: 0
+  # Temporary bridge allowance; lower to 0 after all three aliases are removed.
+  max_compatibility_links: 3
 
 rows:
   - {path: library, kind: structural, owner_ref: "organvm/portvs#workspace-manifest", residency: structural}

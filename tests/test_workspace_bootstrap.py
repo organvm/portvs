@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -16,6 +17,7 @@ from runtime import workspace_bootstrap
 ROOT = Path(__file__).resolve().parents[1]
 JACK = ROOT / "jack.sh"
 BOOTSTRAP = ROOT / "runtime" / "workspace_bootstrap.py"
+MANIFEST = ROOT / "governance" / "workspace-manifest.yaml"
 REQUIREMENTS = ROOT / "requirements.txt"
 
 
@@ -241,6 +243,48 @@ def test_traversal_and_symlink_escape_fail_closed(tmp_path: Path) -> None:
     assert "unsafe relative path" in json.loads(proc.stdout)["error"]
 
 
+@pytest.mark.parametrize(
+    "surface",
+    [
+        "row",
+        "compatibility_path",
+        "compatibility_target",
+    ],
+)
+def test_trailing_slashes_are_structured_contract_errors_without_mutation(
+    tmp_path: Path,
+    surface: str,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    if surface == "row":
+        data["rows"][0]["path"] = "library/"
+    else:
+        link = _compatibility_link("runtime-old")
+        field = "path" if surface == "compatibility_path" else "target"
+        link[field] += "/"
+        data["migration"]["compatibility_links"] = [link]
+    _write(manifest, data)
+    receipt = tmp_path / "receipts" / f"{surface}.json"
+
+    proc = _run(manifest, workspace, "--json", "--receipt", str(receipt))
+
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    assert "non-normalized relative path" in report["error"]
+    assert json.loads(receipt.read_text(encoding="utf-8")) == report
+    assert "Traceback" not in proc.stderr
+    assert not workspace.exists()
+
+
+def test_row_index_defensively_validates_paths() -> None:
+    with pytest.raises(
+        workspace_bootstrap.ContractError,
+        match="non-normalized relative path",
+    ):
+        workspace_bootstrap._row_by_path({"rows": [{"path": "library/"}]})
+
+
 def test_plan_can_write_bounded_receipt(tmp_path: Path) -> None:
     manifest, workspace, _ = _manifest(tmp_path)
     receipt = tmp_path / "receipts" / "plan.json"
@@ -249,11 +293,144 @@ def test_plan_can_write_bounded_receipt(tmp_path: Path) -> None:
     assert json.loads(receipt.read_text(encoding="utf-8"))["mode"] == "plan"
 
 
+def test_receipt_transform_is_recursive_deterministic_and_idempotent(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "Workspace"
+    report = {
+        "schema": "test",
+        "mode": "verify",
+        "ok": False,
+        "workspace_root": str(workspace),
+        "failures": [
+            {
+                "operation": "verify-fail",
+                "path": "zeta/child-b",
+                "detail": "undeclared structural entry",
+            },
+            {
+                "operation": "verify-fail",
+                "path": "child-c",
+                "detail": "undeclared structural entry",
+            },
+            {
+                "operation": "verify-fail",
+                "path": "zeta/child-a",
+                "detail": "undeclared structural entry",
+            },
+            {
+                "operation": "verify-fail",
+                "path": "runtime",
+                "detail": f"failed at {workspace}/runtime",
+            },
+        ],
+        "future": {
+            "nested": [
+                str(workspace / "private"),
+                {"message": f"root {workspace}: unavailable"},
+            ]
+        },
+    }
+    original = json.loads(json.dumps(report))
+
+    prepared = workspace_bootstrap._prepare_receipt_report(report, workspace)
+    prepared_again = workspace_bootstrap._prepare_receipt_report(
+        prepared,
+        workspace,
+    )
+
+    assert report == original
+    assert prepared_again == prepared
+    assert prepared["ok"] is False
+    assert prepared["failure_count"] == 4
+    assert str(workspace) not in json.dumps(prepared)
+    aggregates = [
+        row
+        for row in prepared["failures"]
+        if row["detail"] == "undeclared structural entries aggregated"
+    ]
+    assert [row["path"] for row in aggregates] == [".", "zeta"]
+    expected_names = {
+        ".": ["child-c"],
+        "zeta": ["child-a", "child-b"],
+    }
+    for row in aggregates:
+        names = expected_names[row["path"]]
+        digest_input = json.dumps(
+            names,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        assert row["count"] == len(names)
+        assert row["child_names_sha256"] == hashlib.sha256(digest_input).hexdigest()
+
+
+def test_verify_receipt_aggregates_names_without_changing_stdout(
+    tmp_path: Path,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    assert _run(manifest, workspace).returncode == 0
+    root_names = ["sensitive-alpha", "sensitive-beta"]
+    nested_names = ["sensitive-gamma"]
+    for name in root_names:
+        (workspace / name).mkdir()
+    for name in nested_names:
+        (workspace / "library" / name).mkdir()
+    receipt = tmp_path / "receipts" / "verify.json"
+
+    first = _run(
+        manifest,
+        workspace,
+        "--verify",
+        "--json",
+        "--receipt",
+        str(receipt),
+    )
+
+    assert first.returncode == 1
+    stdout_report = json.loads(first.stdout)
+    stdout_text = json.dumps(stdout_report)
+    for name in root_names + nested_names:
+        assert name in stdout_text
+    stored = json.loads(receipt.read_text(encoding="utf-8"))
+    stored_text = json.dumps(stored)
+    assert stored["ok"] is False
+    assert stored["failure_count"] == len(stdout_report["failures"])
+    assert str(workspace) not in stored_text
+    for name in root_names + nested_names:
+        assert name not in stored_text
+    aggregates = [
+        row
+        for row in stored["failures"]
+        if row["detail"] == "undeclared structural entries aggregated"
+    ]
+    assert [(row["path"], row["count"]) for row in aggregates] == [
+        (".", 2),
+        ("library", 1),
+    ]
+
+    first_bytes = receipt.read_bytes()
+    sentinel_mtime_ns = 1_700_000_000_000_000_000
+    os.utime(receipt, ns=(sentinel_mtime_ns, sentinel_mtime_ns))
+    second = _run(
+        manifest,
+        workspace,
+        "--verify",
+        "--json",
+        "--receipt",
+        str(receipt),
+    )
+    assert second.returncode == 1
+    assert receipt.read_bytes() == first_bytes
+    assert receipt.stat().st_mtime_ns == sentinel_mtime_ns
+
+
 def test_runtime_dependency_is_locked_and_missing_dependency_is_structured(
     tmp_path: Path,
 ) -> None:
     lock = REQUIREMENTS.read_text(encoding="utf-8")
     assert "PyYAML==6.0.3" in lock
+    assert "--no-binary=PyYAML" in lock
+    assert lock.count("--hash=sha256:") == 1
     assert "--hash=sha256:" in lock
     manifest, workspace, _ = _manifest(tmp_path)
     proc = subprocess.run(
@@ -275,6 +452,12 @@ def test_runtime_dependency_is_locked_and_missing_dependency_is_structured(
     report = json.loads(proc.stdout)
     assert "requirements.txt" in report["error"]
     assert "Traceback" not in proc.stderr
+
+
+def test_checked_manifest_budgets_three_temporary_bridge_aliases() -> None:
+    data, _ = workspace_bootstrap.load_manifest(MANIFEST)
+    assert data["limits"]["max_compatibility_links"] == 3
+    assert len(data["migration"]["compatibility_links"]) == 3
 
 
 def test_repository_requires_declared_custody_ref_to_exist(tmp_path: Path) -> None:
@@ -518,6 +701,63 @@ def test_failure_receipt_preserves_partial_apply_actions(tmp_path: Path) -> None
     assert stored["workspace_root"] == "$WORKSPACE_ROOT"
 
 
+def test_clone_is_noninteractive_bounded_and_times_out_as_structured_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    receipt = tmp_path / "receipts" / "clone-timeout.json"
+    observed: dict[str, object] = {}
+
+    def timed_out_run(command: list[str], **kwargs: object) -> None:
+        observed["command"] = command
+        observed["kwargs"] = kwargs
+        raise subprocess.TimeoutExpired(
+            command,
+            workspace_bootstrap.CLONE_TIMEOUT_SECONDS,
+        )
+
+    monkeypatch.setattr(workspace_bootstrap.subprocess, "run", timed_out_run)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(BOOTSTRAP),
+            "--manifest",
+            str(manifest),
+            "--root",
+            str(workspace),
+            "--json",
+            "--receipt",
+            str(receipt),
+        ],
+    )
+
+    assert workspace_bootstrap.main() == 1
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
+    assert report["error"].endswith("clone timed out")
+    assert report["failed_action"]["operation"] == "clone"
+    assert "Traceback" not in captured.err
+    assert json.loads(receipt.read_text(encoding="utf-8"))["error"].endswith(
+        "clone timed out"
+    )
+
+    assert observed["command"][:3] == ["git", "clone", "--origin"]
+    kwargs = observed["kwargs"]
+    assert kwargs["timeout"] == workspace_bootstrap.CLONE_TIMEOUT_SECONDS
+    assert kwargs["check"] is False
+    assert kwargs["capture_output"] is True
+    assert kwargs["text"] is True
+    env = kwargs["env"]
+    assert env["GIT_TERMINAL_PROMPT"] == "0"
+    assert env["GIT_ASKPASS"] == ""
+    assert env["SSH_ASKPASS"] == ""
+    assert env["GCM_INTERACTIVE"] == "Never"
+    assert env["GIT_OPTIONAL_LOCKS"] == "0"
+
+
 @pytest.mark.parametrize(
     ("target", "target_operation"),
     [
@@ -568,6 +808,112 @@ def test_first_apply_queues_compatibility_link_after_new_target_and_converges(
     assert second_report["actions"] == []
     assert second_report["applied"] == []
     assert second_report["blockers"] == []
+
+
+def test_planner_caps_queued_compatibility_links_at_zero_and_one(
+    tmp_path: Path,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    data["migration"]["compatibility_links"] = [
+        _compatibility_link("legacy-a"),
+        _compatibility_link("legacy-b"),
+    ]
+
+    data["limits"]["max_compatibility_links"] = 0
+    _write(manifest, data)
+    zero_report = json.loads(_run(manifest, workspace, "--plan", "--json").stdout)
+    assert not any(row["operation"] == "symlink" for row in zero_report["actions"])
+    assert [
+        row["path"]
+        for row in zero_report["blockers"]
+        if "compatibility link limit exceeded" in row["detail"]
+    ] == ["legacy-a", "legacy-b"]
+
+    data["limits"]["max_compatibility_links"] = 1
+    _write(manifest, data)
+    one_report = json.loads(_run(manifest, workspace, "--plan", "--json").stdout)
+    assert [
+        row["path"] for row in one_report["actions"] if row["operation"] == "symlink"
+    ] == ["legacy-a"]
+    assert [
+        row["path"]
+        for row in one_report["blockers"]
+        if "compatibility link limit exceeded" in row["detail"]
+    ] == ["legacy-b"]
+
+
+def test_existing_compatibility_link_consumes_budget_before_queued_links(
+    tmp_path: Path,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    assert _run(manifest, workspace).returncode == 0
+    data = _load(manifest)
+    data["limits"]["max_compatibility_links"] = 1
+    data["migration"]["compatibility_links"] = [
+        _compatibility_link("missing-link"),
+        _compatibility_link("existing-link"),
+    ]
+    _write(manifest, data)
+    (workspace / "existing-link").symlink_to(
+        workspace / "runtime" / "worktrees",
+        target_is_directory=True,
+    )
+
+    report = json.loads(_run(manifest, workspace, "--plan", "--json").stdout)
+
+    assert not any(row["operation"] == "symlink" for row in report["actions"])
+    assert any(
+        row["path"] == "missing-link"
+        and "compatibility link limit exceeded" in row["detail"]
+        for row in report["blockers"]
+    )
+    assert not any(row["path"] == "existing-link" for row in report["blockers"])
+
+
+def test_same_legacy_and_compatibility_path_converges_after_external_rehome(
+    tmp_path: Path,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path, include_legacy=True)
+    data = _load(manifest)
+    data["limits"]["max_compatibility_links"] = 1
+    data["migration"]["compatibility_links"] = [
+        _compatibility_link(
+            "tool-old",
+            target="library/engine/organvm/tool",
+        )
+    ]
+    _write(manifest, data)
+    legacy = workspace / "tool-old"
+    legacy.mkdir(parents=True)
+    (legacy / "preserved.txt").write_text("preserve me\n", encoding="utf-8")
+
+    blocked = json.loads(_run(manifest, workspace, "--plan", "--json").stdout)
+    assert any(
+        row["path"] == "library/engine/organvm/tool"
+        and "legacy source present" in row["detail"]
+        for row in blocked["blockers"]
+    )
+    assert any(
+        row["path"] == "tool-old"
+        and "compatibility target is not a valid canonical row" in row["detail"]
+        for row in blocked["blockers"]
+    )
+
+    rehomed = tmp_path / "external-rehome"
+    legacy.rename(rehomed)
+    applied = _run(manifest, workspace, "--json")
+    assert applied.returncode == 0, applied.stdout + applied.stderr
+    canonical = workspace / "library" / "engine" / "organvm" / "tool"
+    assert canonical.is_dir()
+    assert legacy.is_symlink()
+    assert legacy.resolve(strict=True) == canonical.resolve(strict=True)
+    assert (rehomed / "preserved.txt").read_text(encoding="utf-8") == "preserve me\n"
+
+    second = json.loads(_run(manifest, workspace, "--json").stdout)
+    assert second["actions"] == []
+    assert second["applied"] == []
+    assert second["blockers"] == []
 
 
 def test_scan_error_is_one_structured_unmeasured_receipt(
@@ -725,6 +1071,7 @@ def test_sibling_compatibility_path_prefixes_remain_valid(
 ) -> None:
     manifest, workspace, _ = _manifest(tmp_path)
     data = _load(manifest)
+    data["limits"]["max_compatibility_links"] = len(paths)
     data["migration"]["compatibility_links"] = [
         _compatibility_link(path) for path in paths
     ]
