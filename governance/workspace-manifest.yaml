@@ -1,0 +1,172 @@
+# PORTVS owns the physical Workspace containment contract.  Directories answer
+# where an object lives; graph-shaped ownership, audience, dependency, and
+# lifecycle questions remain in their registries.
+schema: portvs.workspace_manifest.v1
+workspace_root: "${HOME}/Workspace"
+
+limits:
+  max_scan_entries: 250000
+  max_violations: 0
+  max_unmeasured: 0
+  max_compatibility_links: 0
+
+rows:
+  - {path: library, kind: structural, owner_ref: "organvm/portvs#workspace-manifest", residency: structural}
+
+  - {path: library/storefront, kind: structural, owner_ref: "organvm/portvs#workspace-manifest", residency: structural}
+  - {path: library/storefront/4444J99, kind: structural, owner_ref: "4444J99", residency: structural}
+  - path: library/storefront/4444J99/application-pipeline
+    kind: repository
+    owner_ref: organvm/application-pipeline
+    residency: laptop
+    remote: https://github.com/organvm/application-pipeline.git
+    custody_ref: refs/remotes/origin/main
+    default_branch: main
+    legacy_paths: [4444J99/application-pipeline]
+  - path: library/storefront/4444J99/peer-audited--behavioral-blockchain
+    kind: repository
+    owner_ref: 4444J99/peer-audited--behavioral-blockchain
+    residency: laptop
+    remote: https://github.com/4444J99/peer-audited--behavioral-blockchain.git
+    custody_ref: refs/remotes/origin/main
+    default_branch: main
+    legacy_paths: [4444J99/peer-audited--behavioral-blockchain]
+  - path: library/storefront/4444J99/victoroff-os
+    kind: repository
+    owner_ref: 4444J99/victoroff-os
+    residency: laptop
+    remote: https://github.com/4444J99/victoroff-os.git
+    custody_ref: refs/remotes/origin/main
+    default_branch: main
+    legacy_paths: [victoroff-os]
+
+  - {path: library/shelves, kind: structural, owner_ref: "organvm/portvs#workspace-manifest", residency: structural}
+  - {path: library/shelves/organvm-i-theoria, kind: structural, owner_ref: "organvm-i-theoria", residency: structural}
+  - {path: library/shelves/organvm-ii-poiesis, kind: structural, owner_ref: "organvm-ii-poiesis", residency: structural}
+  - {path: library/shelves/organvm-iii-ergon, kind: structural, owner_ref: "organvm-iii-ergon", residency: structural}
+  - path: library/shelves/organvm-iii-ergon/universal-mail--automation
+    kind: repository
+    owner_ref: organvm/universal-mail--automation
+    residency: laptop
+    remote: https://github.com/organvm/universal-mail--automation.git
+    custody_ref: refs/remotes/origin/main
+    default_branch: main
+    legacy_paths: [4444J99/universal-mail--automation]
+  - {path: library/shelves/organvm-iv-taxis, kind: structural, owner_ref: "organvm-iv-taxis", residency: structural}
+  - {path: library/shelves/organvm-v-logos, kind: structural, owner_ref: "organvm-v-logos", residency: structural}
+  - {path: library/shelves/organvm-vi-koinonia, kind: structural, owner_ref: "organvm-vi-koinonia", residency: structural}
+  - {path: library/shelves/organvm-vii-kerygma, kind: structural, owner_ref: "organvm-vii-kerygma", residency: structural}
+  - {path: library/shelves/meta-organvm, kind: structural, owner_ref: "meta-organvm", residency: structural}
+  - path: library/shelves/meta-organvm/organvm-corpvs-testamentvm
+    kind: repository
+    owner_ref: organvm/organvm-corpvs-testamentvm
+    residency: laptop
+    remote: https://github.com/organvm/organvm-corpvs-testamentvm.git
+    custody_ref: refs/remotes/origin/main
+    default_branch: main
+    legacy_paths: [4444J99/organvm-corpvs-testamentvm]
+
+  - {path: library/engine, kind: structural, owner_ref: "organvm/portvs#workspace-manifest", residency: structural}
+  - {path: library/engine/organvm, kind: structural, owner_ref: "organvm", residency: structural}
+  - path: library/engine/organvm/portvs
+    kind: repository
+    owner_ref: organvm/portvs
+    residency: laptop
+    remote: https://github.com/organvm/portvs.git
+    custody_ref: refs/remotes/origin/main
+    default_branch: main
+    legacy_paths: [4444J99/portvs]
+  - path: library/engine/organvm/limen
+    kind: repository
+    owner_ref: organvm/limen
+    residency: laptop
+    remote: https://github.com/organvm/limen.git
+    custody_ref: refs/remotes/origin/main
+    default_branch: main
+    legacy_paths: [limen]
+  - path: library/engine/organvm/domus-genoma
+    kind: repository
+    owner_ref: organvm/domus-genoma
+    residency: laptop
+    remote: https://github.com/organvm/domus-genoma.git
+    custody_ref: refs/remotes/origin/master
+    default_branch: master
+    legacy_paths: [domus-genoma]
+
+  - {path: library/underworld, kind: structural, owner_ref: "organvm/portvs#archive-index", residency: structural}
+  - path: library/underworld/archive-index.json
+    kind: index
+    owner_ref: organvm/portvs#archive-index
+    residency: remote-index
+    source_ref: https://api.github.com/orgs/organvm/repos?archived=true
+    generator: jack.sh
+
+  - {path: domains, kind: structural, owner_ref: "organvm/portvs#workspace-manifest", residency: structural}
+  - {path: domains/correspondence, kind: structural, owner_ref: "organvm/limen#correspondence", residency: structural}
+  - {path: domains/financial, kind: structural, owner_ref: "organvm/limen#financial", residency: structural}
+  - {path: domains/representation, kind: structural, owner_ref: "organvm/limen#representation", residency: structural}
+  - {path: domains/consulting, kind: structural, owner_ref: "organvm/limen#consulting", residency: structural}
+  - {path: domains/legal, kind: structural, owner_ref: "organvm/limen#legal", residency: structural}
+  - {path: domains/health, kind: structural, owner_ref: "organvm/limen#health", residency: structural}
+  - {path: domains/education, kind: structural, owner_ref: "organvm/limen#education", residency: structural}
+  - {path: domains/governance, kind: structural, owner_ref: "organvm/limen#governance", residency: structural}
+  - {path: domains/contributions, kind: structural, owner_ref: "organvm/limen#contributions", residency: structural}
+
+  - {path: private, kind: structural, owner_ref: "private-inventory", residency: structural}
+  - path: private/life
+    kind: private
+    owner_ref: private-inventory/life
+    residency: private
+    custody_label: workspace-private-life
+    sealed_inventory_ref: workspace://library/engine/organvm/limen/institutio/governance/private-substrate-custody.json
+    restoration_receipt_ref: workspace://library/engine/organvm/limen/institutio/governance/private-substrate-custody.json#workspace-private-life
+  - path: private/finance
+    kind: private
+    owner_ref: private-inventory/finance
+    residency: private
+    custody_label: workspace-private-finance
+    sealed_inventory_ref: workspace://library/engine/organvm/limen/institutio/governance/private-substrate-custody.json
+    restoration_receipt_ref: workspace://library/engine/organvm/limen/institutio/governance/private-substrate-custody.json#workspace-private-finance
+  - path: private/health
+    kind: private
+    owner_ref: private-inventory/health
+    residency: private
+    custody_label: workspace-private-health
+    sealed_inventory_ref: workspace://library/engine/organvm/limen/institutio/governance/private-substrate-custody.json
+    restoration_receipt_ref: workspace://library/engine/organvm/limen/institutio/governance/private-substrate-custody.json#workspace-private-health
+  - path: private/people
+    kind: private
+    owner_ref: private-inventory/people
+    residency: private
+    custody_label: workspace-private-people
+    sealed_inventory_ref: workspace://library/engine/organvm/limen/institutio/governance/private-substrate-custody.json
+    restoration_receipt_ref: workspace://library/engine/organvm/limen/institutio/governance/private-substrate-custody.json#workspace-private-people
+
+  - {path: runtime, kind: structural, owner_ref: "organvm/limen#runtime", residency: structural}
+  - path: runtime/worktrees
+    kind: ephemeral
+    owner_ref: organvm/limen#worktree-reaper
+    residency: ephemeral
+    expires_after: 604800
+    reaper: limen worktree reap
+  - path: runtime/scratch
+    kind: ephemeral
+    owner_ref: organvm/limen#scratch-reaper
+    residency: ephemeral
+    expires_after: 86400
+    reaper: limen reclaim --runtime
+
+migration:
+  compatibility_links:
+    - path: limen
+      target: library/engine/organvm/limen
+      owner_ref: organvm/limen
+      expires_at: "2026-09-30T00:00:00Z"
+    - path: domus-genoma
+      target: library/engine/organvm/domus-genoma
+      owner_ref: organvm/domus-genoma
+      expires_at: "2026-09-30T00:00:00Z"
+    - path: 4444J99/portvs
+      target: library/engine/organvm/portvs
+      owner_ref: organvm/portvs
+      expires_at: "2026-09-30T00:00:00Z"
