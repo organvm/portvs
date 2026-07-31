@@ -59,7 +59,7 @@ lanes sat idle. Now the same idle capacity compounds into institutional weight.
 
 ## His hand only (irreducible — surfaced, not nagged)
 
-- **card-0186 Santander fraud hold** — the whole stack's billing rides on it (one call clears it).
+- **card-xxxx Santander fraud hold** — the whole stack's billing rides on it (one call clears it).
 - **Financial identity** — receiving real money (bank/KYC) is genuinely his.
 - **The send / the signature** — I draft; he sends/signs (reversible-only).
 - **Institutional logins** — D2L (education); privileged/filing acts with Micah (legal).
