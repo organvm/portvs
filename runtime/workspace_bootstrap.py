@@ -200,6 +200,13 @@ def load_manifest(path: Path) -> tuple[dict[str, Any], bytes]:
         target_rel = _safe_path(row["target"])
         if rel in compatibility_paths:
             raise ContractError(f"duplicate compatibility path: {rel}")
+        rel_path = PurePosixPath(rel)
+        for other in compatibility_paths:
+            other_path = PurePosixPath(other)
+            if rel_path in other_path.parents or other_path in rel_path.parents:
+                raise ContractError(
+                    f"nested compatibility paths are not allowed: {other} and {rel}"
+                )
         compatibility_paths.add(rel)
         if rel in row_by_path:
             raise ContractError(
@@ -496,12 +503,8 @@ def plan(data: Mapping[str, Any], root: Path) -> tuple[list[Action], list[Action
                         f"occupied compatibility path; target is {target_rel}",
                     )
                 )
-        elif target.exists():
-            actions.append(Action("symlink", rel, target_rel))
         else:
-            blockers.append(
-                Action("blocked", rel, f"compatibility target is absent: {target_rel}")
-            )
+            actions.append(Action("symlink", rel, target_rel))
     return actions, blockers
 
 
@@ -587,46 +590,154 @@ def verify(data: Mapping[str, Any], root: Path) -> list[Action]:
         except ContractError as exc:
             unsafe[rel] = str(exc)
             failures.append(Action("verify-fail", rel, str(exc)))
+
+    valid_compatibility_paths: set[str] = set()
+    valid_compatibility_links = 0
+    links = (data.get("migration") or {}).get("compatibility_links") or []
+    now = datetime.now(timezone.utc)
+    for row in links:
+        rel = _safe_path(row["path"])
+        target_rel = _safe_path(row["target"])
+        try:
+            path = _safe_destination(root, rel, allow_final_symlink=True)
+        except ContractError as exc:
+            failures.append(Action("verify-fail", rel, str(exc)))
+            continue
+        if not path.exists() and not path.is_symlink():
+            continue
+        if _parse_deadline(row["expires_at"], rel) <= now:
+            failures.append(
+                Action(
+                    "verify-fail",
+                    rel,
+                    f"compatibility link expired at {row['expires_at']}",
+                )
+            )
+            continue
+        try:
+            target = _safe_destination(root, target_rel)
+        except ContractError as exc:
+            failures.append(Action("verify-fail", rel, str(exc)))
+            continue
+        if target_rel in unsafe or not target.is_dir() or target.is_symlink():
+            failures.append(
+                Action(
+                    "verify-fail",
+                    rel,
+                    f"compatibility target is not a valid canonical row: {target_rel}",
+                )
+            )
+            continue
+        if not path.is_symlink():
+            failures.append(
+                Action(
+                    "verify-fail",
+                    rel,
+                    f"compatibility path is not a symlink to {target_rel}",
+                )
+            )
+            continue
+        try:
+            link_target = path.resolve(strict=True)
+            canonical_target = target.resolve(strict=True)
+        except (OSError, RuntimeError) as exc:
+            failures.append(
+                Action(
+                    "verify-fail",
+                    rel,
+                    f"compatibility link target cannot be resolved: {type(exc).__name__}",
+                )
+            )
+            continue
+        if link_target != canonical_target:
+            failures.append(
+                Action(
+                    "verify-fail",
+                    rel,
+                    f"compatibility link does not target {target_rel}",
+                )
+            )
+            continue
+        valid_compatibility_paths.add(rel)
+        valid_compatibility_links += 1
+
     expected: dict[str, set[str]] = {"": set()}
     for rel in rows:
         pure = PurePosixPath(rel)
         parent = "" if str(pure.parent) == "." else pure.parent.as_posix()
         expected.setdefault(parent, set()).add(pure.name)
+    compatibility_parents: set[str] = set()
+    for rel in sorted(valid_compatibility_paths):
+        parent = ""
+        for part in PurePosixPath(rel).parts:
+            expected.setdefault(parent, set()).add(part)
+            parent = part if not parent else f"{parent}/{part}"
+            if parent != rel:
+                compatibility_parents.add(parent)
+    structural_parents = {
+        rel for rel, row in rows.items() if row["kind"] == "structural"
+    }
     max_scan_entries = int(data["limits"]["max_scan_entries"])
     scanned_entries = 0
     scan_exhausted = False
     for parent_rel, child_names in expected.items():
-        if parent_rel and rows[parent_rel]["kind"] != "structural":
+        if (
+            parent_rel
+            and parent_rel not in structural_parents
+            and parent_rel not in compatibility_parents
+        ):
             continue
         if parent_rel in unsafe:
             continue
-        parent = root if not parent_rel else safe_paths[parent_rel]
+        if not parent_rel:
+            parent = root
+        elif parent_rel in safe_paths:
+            parent = safe_paths[parent_rel]
+        else:
+            try:
+                parent = _safe_destination(root, parent_rel)
+            except ContractError:
+                continue
         if not parent.is_dir() or parent.is_symlink():
             continue
-        with os.scandir(parent) as entries:
-            for child in entries:
-                if scanned_entries >= max_scan_entries:
-                    failures.append(
-                        Action(
-                            "verify-unmeasured",
-                            parent_rel or ".",
-                            "scan entry limit reached; Workspace parity is unmeasured",
+        scan_failures: list[Action] = []
+        try:
+            with os.scandir(parent) as entries:
+                for child in entries:
+                    if scanned_entries >= max_scan_entries:
+                        scan_failures.append(
+                            Action(
+                                "verify-unmeasured",
+                                parent_rel or ".",
+                                "scan entry limit reached; Workspace parity is unmeasured",
+                            )
                         )
-                    )
-                    scan_exhausted = True
-                    break
-                scanned_entries += 1
-                if child.name not in child_names:
-                    child_rel = (
-                        child.name if not parent_rel else f"{parent_rel}/{child.name}"
-                    )
-                    failures.append(
-                        Action(
-                            "verify-fail",
-                            child_rel,
-                            "undeclared structural entry",
+                        scan_exhausted = True
+                        break
+                    scanned_entries += 1
+                    if child.name not in child_names:
+                        child_rel = (
+                            child.name
+                            if not parent_rel
+                            else f"{parent_rel}/{child.name}"
                         )
-                    )
+                        scan_failures.append(
+                            Action(
+                                "verify-fail",
+                                child_rel,
+                                "undeclared structural entry",
+                            )
+                        )
+        except OSError:
+            failures.append(
+                Action(
+                    "verify-unmeasured",
+                    parent_rel or ".",
+                    "directory scan failed; Workspace parity is unmeasured",
+                )
+            )
+        else:
+            failures.extend(scan_failures)
         if scan_exhausted:
             break
     for rel, row in rows.items():
@@ -657,16 +768,16 @@ def verify(data: Mapping[str, Any], root: Path) -> list[Action]:
                     "repository remote or custody_ref does not match manifest",
                 )
             )
-    links = (data.get("migration") or {}).get("compatibility_links") or []
-    if links:
-        for row in links:
-            failures.append(
-                Action(
-                    "verify-fail",
-                    str(row["path"]),
-                    "unresolved migration row; final convergence requires zero compatibility links",
-                )
+    max_compatibility_links = int(data["limits"]["max_compatibility_links"])
+    if valid_compatibility_links > max_compatibility_links:
+        failures.append(
+            Action(
+                "verify-fail",
+                ".",
+                "present compatibility links exceed declared limit: "
+                f"{valid_compatibility_links} > {max_compatibility_links}",
             )
+        )
     return failures
 
 
@@ -721,6 +832,7 @@ def main() -> int:
         actions, blockers = plan(data, root)
         if args.verify:
             failures = verify(data, root)
+            actions = [action for action in actions if action.operation != "symlink"]
         elif not args.plan:
             applied = apply_actions(data, root, actions)
             actions, blockers = plan(data, root)

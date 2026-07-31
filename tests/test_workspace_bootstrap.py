@@ -10,6 +10,8 @@ import sys
 import pytest
 import yaml
 
+from runtime import workspace_bootstrap
+
 
 ROOT = Path(__file__).resolve().parents[1]
 JACK = ROOT / "jack.sh"
@@ -149,6 +151,19 @@ def _load(manifest: Path) -> dict[str, object]:
 
 def _write(manifest: Path, data: dict[str, object]) -> None:
     manifest.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+
+
+def _compatibility_link(
+    path: str,
+    target: str = "runtime/worktrees",
+    expires_at: str = "2999-01-01T00:00:00Z",
+) -> dict[str, str]:
+    return {
+        "path": path,
+        "target": target,
+        "owner_ref": "limen",
+        "expires_at": expires_at,
+    }
 
 
 def test_plan_is_read_only_and_json_bounded(tmp_path: Path) -> None:
@@ -501,3 +516,224 @@ def test_failure_receipt_preserves_partial_apply_actions(tmp_path: Path) -> None
     assert stored["applied"] == report["applied"]
     assert stored["failed_action"] == report["failed_action"]
     assert stored["workspace_root"] == "$WORKSPACE_ROOT"
+
+
+@pytest.mark.parametrize(
+    ("target", "target_operation"),
+    [
+        ("runtime/worktrees", "mkdir"),
+        ("library/engine/organvm/tool", "clone"),
+    ],
+)
+def test_first_apply_queues_compatibility_link_after_new_target_and_converges(
+    tmp_path: Path,
+    target: str,
+    target_operation: str,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    data["limits"]["max_compatibility_links"] = 1
+    data["migration"]["compatibility_links"] = [
+        _compatibility_link("legacy-tool", target)
+    ]
+    _write(manifest, data)
+
+    planned = _run(manifest, workspace, "--plan", "--json")
+    assert planned.returncode == 0, planned.stdout + planned.stderr
+    actions = json.loads(planned.stdout)["actions"]
+    target_index = next(
+        index
+        for index, row in enumerate(actions)
+        if row["operation"] == target_operation and row["path"] == target
+    )
+    link_index = next(
+        index
+        for index, row in enumerate(actions)
+        if row["operation"] == "symlink" and row["path"] == "legacy-tool"
+    )
+    assert target_index < link_index
+
+    first = _run(manifest, workspace, "--json")
+    assert first.returncode == 0, first.stdout + first.stderr
+    first_report = json.loads(first.stdout)
+    assert first_report["actions"] == []
+    assert any(
+        row["operation"] == "symlink" and row["path"] == "legacy-tool"
+        for row in first_report["applied"]
+    )
+
+    second = _run(manifest, workspace, "--json")
+    assert second.returncode == 0, second.stdout + second.stderr
+    second_report = json.loads(second.stdout)
+    assert second_report["actions"] == []
+    assert second_report["applied"] == []
+    assert second_report["blockers"] == []
+
+
+def test_scan_error_is_one_structured_unmeasured_receipt(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    assert _run(manifest, workspace).returncode == 0
+    receipt = tmp_path / "receipts" / "scan-error.json"
+    real_scandir = os.scandir
+
+    def guarded_scandir(path: str | os.PathLike[str]) -> os.ScandirIterator[str]:
+        if Path(path) == workspace / "runtime":
+            raise PermissionError("host-specific scan error")
+        return real_scandir(path)
+
+    monkeypatch.setattr(workspace_bootstrap.os, "scandir", guarded_scandir)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(BOOTSTRAP),
+            "--manifest",
+            str(manifest),
+            "--root",
+            str(workspace),
+            "--verify",
+            "--json",
+            "--receipt",
+            str(receipt),
+        ],
+    )
+
+    assert workspace_bootstrap.main() == 1
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
+    scan_failures = [
+        row
+        for row in report["failures"]
+        if row["detail"] == "directory scan failed; Workspace parity is unmeasured"
+    ]
+    assert scan_failures == [
+        {
+            "detail": "directory scan failed; Workspace parity is unmeasured",
+            "operation": "verify-unmeasured",
+            "path": "runtime",
+        }
+    ]
+    stored = json.loads(receipt.read_text(encoding="utf-8"))
+    assert stored["failures"] == report["failures"]
+    assert stored["workspace_root"] == "$WORKSPACE_ROOT"
+    assert "Traceback" not in captured.err
+    assert "host-specific scan error" not in json.dumps(report)
+
+
+def test_compatibility_link_limit_counts_only_present_valid_aliases(
+    tmp_path: Path,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    data["limits"]["max_compatibility_links"] = 1
+    data["migration"]["compatibility_links"] = [
+        _compatibility_link("legacy/runtime-old")
+    ]
+    _write(manifest, data)
+
+    applied = _run(manifest, workspace, "--json")
+    assert applied.returncode == 0, applied.stdout + applied.stderr
+    allowed = _run(manifest, workspace, "--verify", "--json")
+    assert allowed.returncode == 0, allowed.stdout + allowed.stderr
+    assert json.loads(allowed.stdout)["failures"] == []
+
+    alias = workspace / "legacy" / "runtime-old"
+    alias.unlink()
+    alias.parent.rmdir()
+    absent = _run(manifest, workspace, "--verify", "--json")
+    assert absent.returncode == 0, absent.stdout + absent.stderr
+    assert json.loads(absent.stdout)["actions"] == []
+
+    alias.parent.mkdir()
+    alias.symlink_to(workspace / "runtime" / "worktrees", target_is_directory=True)
+    data["limits"]["max_compatibility_links"] = 0
+    _write(manifest, data)
+    over_limit = _run(manifest, workspace, "--verify", "--json")
+    assert over_limit.returncode == 1
+    assert any(
+        row["detail"] == "present compatibility links exceed declared limit: 1 > 0"
+        for row in json.loads(over_limit.stdout)["failures"]
+    )
+
+    alias.unlink()
+    alias.symlink_to(workspace / "runtime", target_is_directory=True)
+    data["limits"]["max_compatibility_links"] = 1
+    _write(manifest, data)
+    wrong = _run(manifest, workspace, "--verify", "--json")
+    wrong_failures = json.loads(wrong.stdout)["failures"]
+    assert wrong.returncode == 1
+    assert any(
+        row["path"] == "legacy/runtime-old"
+        and row["detail"] == "compatibility link does not target runtime/worktrees"
+        for row in wrong_failures
+    )
+    assert not any("exceed declared limit" in row["detail"] for row in wrong_failures)
+
+    alias.unlink()
+    alias.symlink_to(workspace / "runtime" / "worktrees", target_is_directory=True)
+    data["migration"]["compatibility_links"][0]["expires_at"] = "2000-01-01T00:00:00Z"
+    _write(manifest, data)
+    expired = _run(manifest, workspace, "--verify", "--json")
+    expired_failures = json.loads(expired.stdout)["failures"]
+    assert expired.returncode == 1
+    assert any(
+        row["path"] == "legacy/runtime-old" and "expired" in row["detail"]
+        for row in expired_failures
+    )
+    assert not any("exceed declared limit" in row["detail"] for row in expired_failures)
+
+
+@pytest.mark.parametrize(
+    "paths",
+    [
+        ("legacy", "legacy/sub"),
+        ("legacy/sub", "legacy"),
+    ],
+)
+def test_nested_compatibility_paths_are_rejected_in_either_order(
+    tmp_path: Path,
+    paths: tuple[str, str],
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    data["migration"]["compatibility_links"] = [
+        _compatibility_link(path) for path in paths
+    ]
+    _write(manifest, data)
+
+    proc = _run(manifest, workspace, "--plan", "--json")
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    assert "nested compatibility paths are not allowed" in report["error"]
+    assert "Traceback" not in proc.stderr
+
+
+@pytest.mark.parametrize(
+    "paths",
+    [
+        ("legacy/a", "legacy/b"),
+        ("legacy", "legacy-old"),
+    ],
+)
+def test_sibling_compatibility_path_prefixes_remain_valid(
+    tmp_path: Path,
+    paths: tuple[str, str],
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    data["migration"]["compatibility_links"] = [
+        _compatibility_link(path) for path in paths
+    ]
+    _write(manifest, data)
+
+    proc = _run(manifest, workspace, "--plan", "--json")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    report = json.loads(proc.stdout)
+    assert "error" not in report
+    assert {
+        row["path"] for row in report["actions"] if row["operation"] == "symlink"
+    } == set(paths)
