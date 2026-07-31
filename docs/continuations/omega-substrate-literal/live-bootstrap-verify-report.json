@@ -1,0 +1,383 @@
+{
+  "actions": [],
+  "applied": [],
+  "blockers": [
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: domus-genoma",
+      "operation": "blocked",
+      "path": "library/engine/organvm/domus-genoma"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: limen",
+      "operation": "blocked",
+      "path": "library/engine/organvm/limen"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: 4444J99/portvs",
+      "operation": "blocked",
+      "path": "library/engine/organvm/portvs"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: 4444J99/organvm-corpvs-testamentvm",
+      "operation": "blocked",
+      "path": "library/shelves/meta-organvm/organvm-corpvs-testamentvm"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: 4444J99/universal-mail--automation",
+      "operation": "blocked",
+      "path": "library/shelves/organvm-iii-ergon/universal-mail--automation"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: 4444J99/application-pipeline",
+      "operation": "blocked",
+      "path": "library/storefront/4444J99/application-pipeline"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: 4444J99/peer-audited--behavioral-blockchain",
+      "operation": "blocked",
+      "path": "library/storefront/4444J99/peer-audited--behavioral-blockchain"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: victoroff-os",
+      "operation": "blocked",
+      "path": "library/storefront/4444J99/victoroff-os"
+    },
+    {
+      "detail": "compatibility target is not a valid canonical row: library/engine/organvm/limen",
+      "operation": "blocked",
+      "path": "limen"
+    },
+    {
+      "detail": "compatibility target is not a valid canonical row: library/engine/organvm/domus-genoma",
+      "operation": "blocked",
+      "path": "domus-genoma"
+    },
+    {
+      "detail": "compatibility target is not a valid canonical row: library/engine/organvm/portvs",
+      "operation": "blocked",
+      "path": "4444J99/portvs"
+    }
+  ],
+  "failures": [
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "organvm-vii-kerygma"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".session-reconcile"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".domus-genoma-stub-20260730"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "victoroff-os"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".limen.env"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".DS_Store"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".surface-engine-runtime-residue-20260721"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".pytest_cache"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "PRODUCT-REVENUE-BACKLOG.md"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "scope-connectors.sh"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "REVENUE-LAUNCH-KIT.md"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "meta-organvm"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".cleanunique"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "4444J99"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "asi-interview-companion.html"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".uma-worktrees"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "_health-private"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "GOAL.md"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "RELAY-HANDOFF.md"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".claude"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "LIVE-PRODUCTS-GTM.md"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "LEMONSQUEEZY-HANDOFF.md"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "REMAINING-WORK-DIGEST.md"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "owner-issue-dryrun.py"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "vision-board-restore"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "_people-private"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "limen-status-report.html"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "_vigilia-organ-preserve"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "_finance-private"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "browser-state"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "logs"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "owner-digest.py"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "_ferpa-quarantine"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".serena-victoroff-os-20260727"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "limen"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".limen-worktrees"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".limen-repair"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "organvm-vi-koinonia"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".worktrees"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".edu-worktrees"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "goal.py"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "EXPORTER-GTM-ASSETS.md"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "organvm-iv-taxis"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "OWNER-ISSUE-DRYRUN.md"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "asi-interview-prep.md"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "organvm-ii-poiesis"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "domus-genoma"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": ".session-meta-worktrees"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "ANTHONY-OS-v1.md"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "_life-private"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "composition-projects"
+    },
+    {
+      "detail": "undeclared structural entry",
+      "operation": "verify-fail",
+      "path": "MORNING-BRIEFING.md"
+    },
+    {
+      "detail": "declared entry is absent",
+      "operation": "verify-fail",
+      "path": "library/storefront/4444J99/application-pipeline"
+    },
+    {
+      "detail": "declared entry is absent",
+      "operation": "verify-fail",
+      "path": "library/storefront/4444J99/peer-audited--behavioral-blockchain"
+    },
+    {
+      "detail": "declared entry is absent",
+      "operation": "verify-fail",
+      "path": "library/storefront/4444J99/victoroff-os"
+    },
+    {
+      "detail": "declared entry is absent",
+      "operation": "verify-fail",
+      "path": "library/shelves/organvm-iii-ergon/universal-mail--automation"
+    },
+    {
+      "detail": "declared entry is absent",
+      "operation": "verify-fail",
+      "path": "library/shelves/meta-organvm/organvm-corpvs-testamentvm"
+    },
+    {
+      "detail": "declared entry is absent",
+      "operation": "verify-fail",
+      "path": "library/engine/organvm/portvs"
+    },
+    {
+      "detail": "declared entry is absent",
+      "operation": "verify-fail",
+      "path": "library/engine/organvm/limen"
+    },
+    {
+      "detail": "declared entry is absent",
+      "operation": "verify-fail",
+      "path": "library/engine/organvm/domus-genoma"
+    },
+    {
+      "detail": "unresolved migration row; final convergence requires zero compatibility links",
+      "operation": "verify-fail",
+      "path": "limen"
+    },
+    {
+      "detail": "unresolved migration row; final convergence requires zero compatibility links",
+      "operation": "verify-fail",
+      "path": "domus-genoma"
+    },
+    {
+      "detail": "unresolved migration row; final convergence requires zero compatibility links",
+      "operation": "verify-fail",
+      "path": "4444J99/portvs"
+    }
+  ],
+  "manifest_sha256": "7824e42a1e41044e19080a1439dd56b7bcee3f8b6c646b1b635ca2afaa4255b4",
+  "mode": "verify",
+  "ok": false,
+  "schema": "portvs.workspace_bootstrap_report.v1",
+  "workspace_root": "$WORKSPACE_ROOT"
+}

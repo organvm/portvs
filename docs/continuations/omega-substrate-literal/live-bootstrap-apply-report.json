@@ -1,6 +1,27 @@
 {
   "actions": [],
-  "applied": [],
+  "applied": [
+    {
+      "detail": "set declared private container mode to 0700",
+      "operation": "chmod-private",
+      "path": "private/finance"
+    },
+    {
+      "detail": "set declared private container mode to 0700",
+      "operation": "chmod-private",
+      "path": "private/health"
+    },
+    {
+      "detail": "set declared private container mode to 0700",
+      "operation": "chmod-private",
+      "path": "private/life"
+    },
+    {
+      "detail": "set declared private container mode to 0700",
+      "operation": "chmod-private",
+      "path": "private/people"
+    }
+  ],
   "blockers": [
     {
       "detail": "legacy source present; preserve/rehome it before hydration: domus-genoma",
@@ -60,7 +81,7 @@
   ],
   "failures": [],
   "manifest_sha256": "7824e42a1e41044e19080a1439dd56b7bcee3f8b6c646b1b635ca2afaa4255b4",
-  "mode": "plan",
+  "mode": "apply",
   "ok": false,
   "schema": "portvs.workspace_bootstrap_report.v1",
   "workspace_root": "$WORKSPACE_ROOT"

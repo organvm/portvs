@@ -1,14 +1,20 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+import stat
 import subprocess
+import sys
 
+import pytest
 import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
 JACK = ROOT / "jack.sh"
+BOOTSTRAP = ROOT / "runtime" / "workspace_bootstrap.py"
+REQUIREMENTS = ROOT / "requirements.txt"
 
 
 def _git(repo: Path, *args: str) -> None:
@@ -137,6 +143,14 @@ def _run(
     )
 
 
+def _load(manifest: Path) -> dict[str, object]:
+    return yaml.safe_load(manifest.read_text(encoding="utf-8"))
+
+
+def _write(manifest: Path, data: dict[str, object]) -> None:
+    manifest.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+
+
 def test_plan_is_read_only_and_json_bounded(tmp_path: Path) -> None:
     manifest, workspace, _ = _manifest(tmp_path)
     proc = _run(manifest, workspace, "--plan", "--json")
@@ -218,3 +232,272 @@ def test_plan_can_write_bounded_receipt(tmp_path: Path) -> None:
     proc = _run(manifest, workspace, "--plan", "--json", "--receipt", str(receipt))
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert json.loads(receipt.read_text(encoding="utf-8"))["mode"] == "plan"
+
+
+def test_runtime_dependency_is_locked_and_missing_dependency_is_structured(
+    tmp_path: Path,
+) -> None:
+    lock = REQUIREMENTS.read_text(encoding="utf-8")
+    assert "PyYAML==6.0.3" in lock
+    assert "--hash=sha256:" in lock
+    manifest, workspace, _ = _manifest(tmp_path)
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-S",
+            str(BOOTSTRAP),
+            "--manifest",
+            str(manifest),
+            "--root",
+            str(workspace),
+            "--plan",
+            "--json",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    assert "requirements.txt" in report["error"]
+    assert "Traceback" not in proc.stderr
+
+
+def test_repository_requires_declared_custody_ref_to_exist(tmp_path: Path) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    assert _run(manifest, workspace).returncode == 0
+    repo = workspace / "library" / "engine" / "organvm" / "tool"
+    _git(repo, "update-ref", "-d", "refs/remotes/origin/main")
+
+    planned = _run(manifest, workspace, "--plan", "--json")
+    assert any(
+        row["path"] == "library/engine/organvm/tool"
+        and "declared repository" in row["detail"]
+        for row in json.loads(planned.stdout)["blockers"]
+    )
+    verified = _run(manifest, workspace, "--verify", "--json")
+    assert any(
+        row["path"] == "library/engine/organvm/tool" and "custody_ref" in row["detail"]
+        for row in json.loads(verified.stdout)["failures"]
+    )
+
+
+def test_expired_compatibility_link_is_never_planned(tmp_path: Path) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    data["migration"]["compatibility_links"] = [
+        {
+            "path": "runtime-old",
+            "target": "runtime/worktrees",
+            "owner_ref": "limen",
+            "expires_at": "2000-01-01T00:00:00Z",
+        }
+    ]
+    _write(manifest, data)
+
+    proc = _run(manifest, workspace, "--plan", "--json")
+    assert proc.returncode == 0
+    report = json.loads(proc.stdout)
+    assert not any(row["operation"] == "symlink" for row in report["actions"])
+    assert any(
+        row["path"] == "runtime-old" and "expired" in row["detail"]
+        for row in report["blockers"]
+    )
+
+
+def test_verify_stops_at_declared_scan_limit(tmp_path: Path) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    assert _run(manifest, workspace).returncode == 0
+    data = _load(manifest)
+    data["limits"]["max_scan_entries"] = 3
+    _write(manifest, data)
+    for index in range(20):
+        (workspace / f"undeclared-{index:02d}").mkdir()
+
+    proc = _run(manifest, workspace, "--verify", "--json")
+    assert proc.returncode == 1
+    failures = json.loads(proc.stdout)["failures"]
+    assert sum(row["operation"] == "verify-unmeasured" for row in failures) == 1
+    assert sum(row["detail"] == "undeclared structural entry" for row in failures) <= 3
+
+
+@pytest.mark.parametrize(
+    ("row_path", "field", "replacement_kind"),
+    [
+        ("library/engine/organvm/tool", "remote", None),
+        ("library/engine/organvm/tool", "custody_ref", None),
+        ("library/underworld/archive-index.json", "source_ref", None),
+        ("runtime/worktrees", "reaper", None),
+        ("runtime/worktrees", "custody_label", "private"),
+    ],
+)
+def test_kind_specific_fields_fail_as_structured_contract_errors(
+    tmp_path: Path,
+    row_path: str,
+    field: str,
+    replacement_kind: str | None,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    row = next(row for row in data["rows"] if row["path"] == row_path)
+    if replacement_kind:
+        row["kind"] = replacement_kind
+    row.pop(field, None)
+    _write(manifest, data)
+
+    proc = _run(manifest, workspace, "--plan", "--json")
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    assert report["mode"] == "plan"
+    assert field in report["error"]
+    assert "Traceback" not in proc.stderr
+
+
+def test_private_containers_are_created_and_repaired_to_mode_0700(
+    tmp_path: Path,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    data["rows"].extend(
+        [
+            {
+                "path": "private",
+                "kind": "structural",
+                "owner_ref": "private-inventory",
+                "residency": "structural",
+            },
+            {
+                "path": "private/life",
+                "kind": "private",
+                "owner_ref": "private-inventory/life",
+                "residency": "private",
+                "custody_label": "workspace-private-life",
+                "sealed_inventory_ref": "receipt://sealed",
+                "restoration_receipt_ref": "receipt://restored",
+            },
+        ]
+    )
+    _write(manifest, data)
+    assert _run(manifest, workspace).returncode == 0
+    private = workspace / "private" / "life"
+    assert stat.S_IMODE(private.stat().st_mode) == 0o700
+
+    os.chmod(private, 0o755)
+    verified = _run(manifest, workspace, "--verify", "--json")
+    assert any(
+        row["path"] == "private/life" and "0700" in row["detail"]
+        for row in json.loads(verified.stdout)["failures"]
+    )
+    planned = _run(manifest, workspace, "--plan", "--json")
+    assert any(
+        row["operation"] == "chmod-private" and row["path"] == "private/life"
+        for row in json.loads(planned.stdout)["actions"]
+    )
+    assert _run(manifest, workspace).returncode == 0
+    assert stat.S_IMODE(private.stat().st_mode) == 0o700
+
+
+def test_compatibility_target_must_be_safe_and_canonically_valid(
+    tmp_path: Path,
+) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    data["migration"]["compatibility_links"] = [
+        {
+            "path": "runtime-old",
+            "target": "runtime/worktrees",
+            "owner_ref": "limen",
+            "expires_at": "2999-01-01T00:00:00Z",
+        }
+    ]
+    _write(manifest, data)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    workspace.mkdir(parents=True)
+    (workspace / "runtime").mkdir()
+    (workspace / "runtime" / "worktrees").symlink_to(outside, target_is_directory=True)
+
+    proc = _run(manifest, workspace, "--plan", "--json")
+    report = json.loads(proc.stdout)
+    assert not any(row["operation"] == "symlink" for row in report["actions"])
+    assert any(
+        row["path"] == "runtime-old"
+        and "symlink component escapes Workspace" in row["detail"]
+        for row in report["blockers"]
+    )
+    assert not (workspace / "runtime-old").exists()
+
+
+def test_blocked_parent_suppresses_descendant_actions(tmp_path: Path) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    workspace.mkdir(parents=True)
+    (workspace / "library").write_text("occupied\n", encoding="utf-8")
+
+    proc = _run(manifest, workspace, "--json")
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    assert "error" not in report
+    assert any(
+        row["path"] == "library/engine" and "ancestor is blocked" in row["detail"]
+        for row in report["blockers"]
+    )
+    assert not (workspace / "library" / "engine").exists()
+    assert (workspace / "runtime" / "worktrees").is_dir()
+
+
+def test_verify_never_traverses_an_escaping_symlink(tmp_path: Path) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "outside-secret").mkdir()
+    workspace.mkdir(parents=True)
+    (workspace / "library").symlink_to(outside, target_is_directory=True)
+
+    proc = _run(manifest, workspace, "--verify", "--json")
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    rendered = json.dumps(report)
+    assert "symlink component escapes Workspace" in rendered
+    assert "outside-secret" not in rendered
+
+
+def test_plan_never_traverses_a_workspace_root_symlink(tmp_path: Path) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    outside = tmp_path / "outside-root"
+    outside.mkdir()
+    (outside / "outside-secret").mkdir()
+    workspace.parent.mkdir(parents=True)
+    workspace.symlink_to(outside, target_is_directory=True)
+
+    proc = _run(manifest, workspace, "--plan", "--json")
+    report = json.loads(proc.stdout)
+    assert report["actions"] == []
+    assert report["blockers"] == [
+        {
+            "detail": "Workspace root must be a physical directory",
+            "operation": "blocked",
+            "path": ".",
+        }
+    ]
+    assert "outside-secret" not in json.dumps(report)
+
+
+def test_failure_receipt_preserves_partial_apply_actions(tmp_path: Path) -> None:
+    manifest, workspace, _ = _manifest(tmp_path)
+    data = _load(manifest)
+    repo = next(
+        row for row in data["rows"] if row["path"] == "library/engine/organvm/tool"
+    )
+    repo["remote"] = str(tmp_path / "missing-remote.git")
+    _write(manifest, data)
+    receipt = tmp_path / "receipts" / "failed-apply.json"
+
+    proc = _run(manifest, workspace, "--json", "--receipt", str(receipt))
+    assert proc.returncode == 1
+    report = json.loads(proc.stdout)
+    stored = json.loads(receipt.read_text(encoding="utf-8"))
+    assert report["mode"] == "apply"
+    assert report["applied"]
+    assert report["failed_action"]["operation"] == "clone"
+    assert stored["applied"] == report["applied"]
+    assert stored["failed_action"] == report["failed_action"]
+    assert stored["workspace_root"] == "$WORKSPACE_ROOT"
