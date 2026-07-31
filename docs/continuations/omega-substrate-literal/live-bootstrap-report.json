@@ -8,7 +8,7 @@
       "path": "library/engine/organvm/domus-genoma"
     },
     {
-      "detail": "legacy source present; preserve/rehome it before hydration: limen",
+      "detail": "existing path is not the declared repository",
       "operation": "blocked",
       "path": "library/engine/organvm/limen"
     },
