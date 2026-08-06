@@ -1,0 +1,17 @@
+samples/*
+!samples/.gitkeep
+
+renders/*
+!renders/.gitkeep
+
+work/*
+!work/.gitkeep
+
+site/*
+!site/.gitkeep
+
+packages/*
+!packages/.gitkeep
+
+__pycache__/
+.DS_Store
