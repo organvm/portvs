@@ -1,0 +1,68 @@
+{
+  "actions": [],
+  "applied": [],
+  "blockers": [
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: domus-genoma",
+      "operation": "blocked",
+      "path": "library/engine/organvm/domus-genoma"
+    },
+    {
+      "detail": "existing path is not the declared repository",
+      "operation": "blocked",
+      "path": "library/engine/organvm/limen"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: 4444J99/portvs",
+      "operation": "blocked",
+      "path": "library/engine/organvm/portvs"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: 4444J99/organvm-corpvs-testamentvm",
+      "operation": "blocked",
+      "path": "library/shelves/meta-organvm/organvm-corpvs-testamentvm"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: 4444J99/universal-mail--automation",
+      "operation": "blocked",
+      "path": "library/shelves/organvm-iii-ergon/universal-mail--automation"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: 4444J99/application-pipeline",
+      "operation": "blocked",
+      "path": "library/storefront/4444J99/application-pipeline"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: 4444J99/peer-audited--behavioral-blockchain",
+      "operation": "blocked",
+      "path": "library/storefront/4444J99/peer-audited--behavioral-blockchain"
+    },
+    {
+      "detail": "legacy source present; preserve/rehome it before hydration: victoroff-os",
+      "operation": "blocked",
+      "path": "library/storefront/4444J99/victoroff-os"
+    },
+    {
+      "detail": "compatibility target is not a valid canonical row: library/engine/organvm/limen",
+      "operation": "blocked",
+      "path": "limen"
+    },
+    {
+      "detail": "compatibility target is not a valid canonical row: library/engine/organvm/domus-genoma",
+      "operation": "blocked",
+      "path": "domus-genoma"
+    },
+    {
+      "detail": "compatibility target is not a valid canonical row: library/engine/organvm/portvs",
+      "operation": "blocked",
+      "path": "4444J99/portvs"
+    }
+  ],
+  "failure_count": 0,
+  "failures": [],
+  "manifest_sha256": "55e87b1d7343a037b58e36a9d709cd4f8354dada784a80ca680bafacb3250d09",
+  "mode": "apply",
+  "ok": false,
+  "schema": "portvs.workspace_bootstrap_report.v1",
+  "workspace_root": "$WORKSPACE_ROOT"
+}
