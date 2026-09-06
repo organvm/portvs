@@ -61,3 +61,14 @@ merge, deployment or social posting. Audio remains separate from video-loop
 count: legacy routing is retained, new bounded previews/exports are silent.
 Ableton, Max for Live, Max/MSP, Alchemical Synthesizer and external modulation
 remain extension seams, not implemented integration claims.
+
+## September 6 independent browser proof
+
+`browser_continuity_probe.js` and `test_browser_continuity.py` add an independent
+native DOM/media observer, seven bounded resize scenarios and nine rejected
+browser fault injections. `BROWSER_CONTINUITY_RECEIPT.md` and
+`BROWSER_CONTINUITY_EVIDENCE.json` record this execution: 16 new plus 65 rerun
+scoped tests passed with explicit in-memory IO. Two default-HTTP attempts failed
+before application loading under browser policy; HTTP/WebCrypto and physical
+device gates remain open. Production runtime/compiler/renderer are unchanged.
+PR #9 remains draft; no overall review-readiness or hosted-CI-green claim.
