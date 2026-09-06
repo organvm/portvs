@@ -86,3 +86,16 @@ passes explicitly use in-memory IO; a new default-HTTP attempt failed before
 loading. The normal served-loading gate and hosted CI remain unresolved, so
 PR #9 remains draft. Historical, device, deployment and artist gates are not
 promoted by these synthetic proofs.
+
+## September 6 proof-runner fault controls
+
+`test_review_proof.py` adds 27 focused runner tests. `run_review_proof.py` now
+rejects empty or incomplete test execution and inconsistent child receipts,
+retains malformed receipt bytes, and records launch failures without retry or
+transport substitution. The self-tests join the model shard.
+`PROOF_RUNNER_EVIDENCE.json` records the exact scoped execution and source hashes.
+These are synthetic runner fixtures, not new browser or application passes.
+The previous 90-test application result was not rerun in this pass. A separate
+HTTP environment preflight reproduced blocked Chromium navigation while Python
+HTTP returned 200; no browser policy changed. PR #9 remains draft, with served
+loading and hosted CI still open. No runtime, renderer or authoring UI changed.

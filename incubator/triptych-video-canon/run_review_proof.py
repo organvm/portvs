@@ -21,7 +21,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 GROUPS = {
-    'model': ['test_composition_model', 'test_authoring_contract',
+    'model': ['test_review_proof', 'test_composition_model', 'test_authoring_contract',
               'test_composition_render', 'test_browser_runtime.PlanTests',
               'test_browser_boundaries.PlanBoundaryTests'],
     'counts-3-5': [f'test_browser_runtime.BrowserTests.test_{n}_loop_native_continuity' for n in (3,4,5)],
@@ -47,16 +47,57 @@ GROUPS = {
 
 def child(output: Path, names: list[str]) -> int:
     suite = unittest.defaultTestLoader.loadTestsFromNames(names)
+    expected = suite.countTestCases()
     result = unittest.TextTestRunner(verbosity=2).run(suite)
-    passed = result.wasSuccessful() and not result.skipped
+    passed = (expected > 0 and result.testsRun == expected and result.wasSuccessful()
+              and not result.skipped and not result.expectedFailures)
     output.write_text(json.dumps(dict(
-        tests_run=result.testsRun, failures=len(result.failures), errors=len(result.errors),
+        tests_expected=expected, tests_run=result.testsRun,
+        failures=len(result.failures), errors=len(result.errors),
+        expected_failures=len(result.expectedFailures),
         skipped=len(result.skipped), unexpected_successes=len(result.unexpectedSuccesses),
         status='passed' if passed else 'failed'), indent=2)+'\n')
     return 0 if passed else 1
 
 
+
+COUNTERS = ('tests_expected', 'tests_run', 'failures', 'errors', 'skipped',
+            'unexpected_successes', 'expected_failures')
+
+
+def unique_keys(pairs: list[tuple[str, object]]) -> dict:
+    """A duplicate field is ambiguous evidence, not last-write-wins JSON."""
+    value = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError(f'duplicate receipt key: {key}')
+        value[key] = item
+    return value
+
+
+def read_child_receipt(path: Path) -> dict:
+    """Validate completed child evidence; retain corrupt raw files for diagnosis."""
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 65536:
+        raise ValueError('missing, non-regular or oversized child receipt')
+    value = json.loads(path.read_text(), object_pairs_hook=unique_keys)
+    if not isinstance(value, dict) or value.get('status') not in ('passed', 'failed'):
+        raise ValueError('child receipt must be an object with a terminal status')
+    if any(type(value.get(key)) is not int or value[key] < 0 for key in COUNTERS):
+        raise ValueError('child receipt counters must be present nonnegative integers')
+    if value['status'] == 'passed' and (
+            value['tests_expected'] == 0 or value['tests_run'] != value['tests_expected']
+            or any(value[key] for key in COUNTERS[2:])):
+        raise ValueError('passed child receipt has empty, incomplete or unsuccessful tests')
+    return {key: value[key] for key in ('status', *COUNTERS)}
+
+
 def run(output: Path, transport: str, groups: list[str], timeout: float) -> int:
+    if transport not in ('http', 'in-memory'):
+        raise ValueError('Unknown proof transport')
+    if not groups or len(groups) != len(set(groups)) or any(group not in GROUPS for group in groups):
+        raise ValueError('Proof groups must be nonempty, known and unique')
+    if not 1 <= timeout <= 600:
+        raise ValueError('timeout must be in 1..600')
     output = output.resolve()
     if not output.is_relative_to(HERE / 'runtime-proof') or output == HERE / 'runtime-proof':
         raise ValueError('Evidence output must be a child of runtime-proof inside the incubator')
@@ -76,12 +117,17 @@ def run(output: Path, transport: str, groups: list[str], timeout: float) -> int:
             try:
                 process = subprocess.run(command, cwd=HERE, env=env, stdout=log,
                                          stderr=subprocess.STDOUT, timeout=timeout)
-                facts = json.loads(path.read_text()) if path.exists() else dict(status='failed', reason='no child receipt')
+                try:
+                    facts = read_child_receipt(path)
+                except (ValueError, OSError) as exc:
+                    facts = dict(status='failed', reason=f'invalid child receipt: {exc}')
                 if process.returncode:
                     facts['status'] = 'failed'
                 facts['exit_code'] = process.returncode
             except subprocess.TimeoutExpired:
                 facts = dict(status='failed', reason='timeout; incomplete tests are not counted as passed')
+            except OSError as exc:
+                facts = dict(status='failed', reason=f'child launch failed: {exc}')
         facts.update(group=group, elapsed_seconds=round(time.monotonic()-started,3), tests=GROUPS[group])
         report['groups'].append(facts)
         report_path.write_text(json.dumps(report, indent=2)+'\n')
@@ -89,7 +135,7 @@ def run(output: Path, transport: str, groups: list[str], timeout: float) -> int:
     passed = all(item['status']=='passed' for item in report['groups'])
     report['status'] = 'passed' if passed else 'failed'
     report['totals'] = {key:sum(item.get(key,0) for item in report['groups'])
-                        for key in ('tests_run','failures','errors','skipped','unexpected_successes')}
+                        for key in COUNTERS}
     complete = set(groups) == set(GROUPS)
     report['complete_group_set'] = complete
     report['demonstrated']['local_narrow_tests'] = passed and complete
