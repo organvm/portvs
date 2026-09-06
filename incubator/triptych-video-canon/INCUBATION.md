@@ -72,3 +72,17 @@ scoped tests passed with explicit in-memory IO. Two default-HTTP attempts failed
 before application loading under browser policy; HTTP/WebCrypto and physical
 device gates remain open. Production runtime/compiler/renderer are unchanged.
 PR #9 remains draft; no overall review-readiness or hosted-CI-green claim.
+
+## September 6 reconciled boundary and review proof
+
+The subsequent code commit `d523af18797996d9fc3b1446dfb1238cef7bbfbd` preserves
+the independent observer above and hardens the preview compiler/runtime at
+malformed-plan, supported-rate and startup-error boundaries. The normalized
+engine, authoring model and FFmpeg renderer remain unchanged in this tranche.
+`REVIEW_READINESS_RECEIPT.md` and `REVIEW_READINESS_EVIDENCE.json` record 90
+reconciled scoped passes, five freshly matched legacy decoded-output pairs,
+ten freshly reproduced small paired exports and two portable replays. Native
+passes explicitly use in-memory IO; a new default-HTTP attempt failed before
+loading. The normal served-loading gate and hosted CI remain unresolved, so
+PR #9 remains draft. Historical, device, deployment and artist gates are not
+promoted by these synthetic proofs.
