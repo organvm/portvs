@@ -1,324 +1,71 @@
 # Visual-Form Evolutionary Audit — 2026-09-05
 
-Status: active synthesis
-Owner: Portvs incubator while implementation owner remains unresolved
-Scope: existing visual/audiovisual works → reusable formal grammar → daily artifact evolution
-
-## Purpose
-
-This audit does not invent a new generative-art project. It identifies an already-emerging lineage across prior works, extracts reusable formal and computational primitives, and defines a production rule: each system increment must remain capable of producing a finished public artifact the same day.
-
-The governing development model is concentric rather than replacement-based. Earlier forms remain valid render targets while later circles add dimensions: still image → moving image → generative timing → generative sound → modulation → persistent web state → audience interaction → spatial world → embodiment → physical installation.
-
-## Evidence posture
-
-Use three confidence states:
-
-- `verified`: implementation or tracked source evidence inspected in the current remote canon.
-- `documented`: tracked records name the work or behavior, but the originating implementation/media is not currently available in the remote canon inspected here.
-- `user-attested`: supplied directly by the artist in the 2026-09-05 working session; do not silently promote to implementation evidence.
-
-Do not allow conceptual continuity to become implementation evidence.
-
-## Current lineage matrix
-
-| Work / branch | Evidence state | Already established | Reusable primitive | Immediate next evolution |
-| --- | --- | --- | --- | --- |
-| Triptych / tri-panel selector | documented + user-attested | Three simultaneous image apertures; selection/chance; prior rendered Triptych media exists | `panel topology`, `media-bank selection`, `hold/swap`, `three-part simultaneity` | Recover executable selector if available; normalize as a 3-panel configuration rather than rewrite history |
-| Up the Hill Backwards | user-attested | Quad-panel form | `four-panel topology`, multi-view juxtaposition | Locate source/implementation under actual repository or media name; extract topology without presuming behavior not yet verified |
-| Narcissus | documented + user-attested | Existing visual/audiovisual branch repeatedly referenced in prior Triptych excavation | Unknown until source inspection | Locate canonical implementation/media before defining its formal contribution |
-| Floating Points | documented + user-attested | Dense many-layer moving-image composition; prior render-loss/failure references exist; artist reports ~50–100 Premiere layers with effects | `high-density simultaneity`, `independent temporal layers`, `nested compositing`, `failure boundary of timeline editing` | Treat as formal ancestor of a realtime/generative layer system; do not claim original implementation survives until located |
-| iPhone photo-widget compositions | user-attested + current visual evidence | Stable screen topology with independently changing photo banks; chance daily conjunctions | `independent clocks`, `ambient persistence`, `chance pairing`, `background + apertures` | Reproduce as a lightweight configurable runtime with reproducible seeds/holds |
-| The Thing Without a Name / Danse Macabre | verified | 2017 still-photo corpus reactivated as deterministic generative WebGL room; pure `f(seed,t)` engine; spatial panel concept; user interaction and physical-room trajectory documented | `deterministic state`, `projective texturing`, `spatial planes`, `independent metamorphosis`, `addressable permalink`, `engine-as-work / render-target model` | Use as the most advanced proven ancestor and compatibility target for the common composition model |
-| Visualizer / generative abstract runtime | verified at repository-canon level | Browser-native p5/canvas/WebGL visualizer branches already exist | `parameterized browser runtime`, `generative field`, `web-native interaction` | Reuse or promote only after explicit implementation-owner decision |
-| Web / 3D chambers | verified at repository-canon level | Existing WebGL/Three.js room/chamber branch exists in the Visual Form Canon | `navigable spatial runtime` | Use as prior art when the system reaches walkable-space circle |
-| Exhibit / kiosk / gallery branch | verified at canon level | Existing promotion aperture for digital frame, kiosk, gallery loop, installation and living-loop contracts | `physical playback target`, `installation contract` | Preserve as downstream render target; do not prematurely build installation infrastructure |
+Status: evidence reconciliation after the Artifact 001 execution tranche.
+Owner/boundary: Portvs, `incubator/triptych-video-canon/`.
+Coordination: issue #8; audit PR #7; implementation PR #9.
 
-## Verified Danse contribution
+This updates the existing audit rather than starting another census or archaeology project. The previous broad model and roadmap remain in Git history at `95842ae8f45a4b00f630ad12054c845aa67f30c0`; their proposed capabilities were not execution evidence. The current implementation evidence is PR #9 commit `1009628e58563bb1b20771bfbe69fe573d31adbf` and its `ARTIFACT_001_RECEIPT.md`.
 
-`organvm/the-thing-without-a-name` materially changes the baseline. Its preserved generative-engine plan states that the 2017 still-photo work was to become a constantly changing space using screens at different angles/depths/transparencies, with a digital proof preceding physical realization. The plan explicitly defines five faces of one engine: film, living web page, social presence, visitor insertion, and a costed physical-room pitch.
+## Evidence vocabulary
 
-The engine decision `f(seed,t)` is especially important. It provides deterministic reconstruction, O(1) seek, permalinks, synchronized projection potential, and a clean separation between generative state and render target. This should be treated as a direct ancestor of the new composition core, not an isolated one-off implementation.
+Keep `verified`, `documented` and `user-attested` attached to individual claims. Record inspection stage separately:
 
-The current canonical repository also preserves project lineage in `LINEAGE.json`, including the migration from `organvm/limen/apps/danse` and verification invariants.
-
-## Existing Visual Form Canon findings that already support this synthesis
-
-The Portvs Visual Form Canon has already established the broader object as:
-
-```text
-source set + visual grammar + runtime target + remix transforms + public/private boundary + promotion target
-```
-
-Its current remote census found 48 visual-form candidate repositories and explicitly identifies reusable branches for:
-
-- Triptych / time-based media
-- ambient screensaver / wallpaper runtime
-- visualizer / generative abstract runtime
-- web / 3D chambers
-- Media Ark source custody
-- portfolio / public gateway
-- exhibit / kiosk / gallery
-- lifecycle / generated-form governance
-
-Therefore this audit extends an existing unification effort rather than creating a competing canon.
-
-## Normalized composition model — first draft
+`located in metadata -> original bytes retrieved/hashed -> structural inspection -> visual inspection -> executed/rendered`
 
-The common model should be application-independent enough that an old work can be described without pretending it was originally built in the future engine.
-
-```text
-Composition
-  id
-  lineage[]
-  source_sets[]
-  topology
-  layers[]
-  global_state
-  timing
-  routing[]
-  seed
-  render_target
+Connector-extracted text is an additional text-inspection stage, not a substitute for original bytes or preserved structural relationships. An archived tree proves what was listed, not that every dependency remains reachable. Sequence names and blank descriptive CSV columns do not specify a composition. Do not promote an entire work because one locator is verified.
 
-Layer
-  id
-  source_ref
-  media_type
-  x / y / z
-  width / height
-  rotation
-  opacity
-  blend
-  playback_state
-  selection_strategy
-  local_clock
-  transforms[]
-  modulation_inputs[]
+The works below form a provisional lineage network. Direct chronological derivation between Triptych, Up the Hill Backwards, Floating Points and Danse has not been established.
 
-Routing
-  source_parameter
-  transform
-  destination_parameter
-  amount
-  polarity
-  curve
-  smoothing
-  probability
-  condition
-```
+## Reconciled lineage and recovery matrix
 
-This is deliberately broader than `Panel`: a later layer may be a light, sound emitter, particle field, mesh, text surface, camera, or physical output.
+| Object | Supported claim / stage | Unverified boundary |
+|---|---|---|
+| Triptych Video Canon in Portvs | Renderer source inspected at main `48da3da293ecd7604b6c9d3ce19d0bf49a70013d`; original blob `6155fa1b8c9d5284c3deda0eaf56b342e47cf1bc`; synthetic baseline executed and visually inspected; five legacy decoded-output regressions passed | This renderer is not automatically the earlier photo selector; complete website/export workflow was not executed in this tranche |
+| Earlier tri-panel photo selector / First Circle | Artist testimony and related records document a prior work | Exact implementation, identity and relation to later versions remain unresolved |
+| Archival TripTicks | A MOV locator exists in Dropbox metadata; prior records separately mention a local MP4 | Original bytes, playback and MOV/MP4 equivalence not verified; do not conflate either with the selector, later renderer or conceptual TRIPTYCH record |
+| Floating Points | V1/V2/V3 project locators documented; prior sequence CSV and archived tree inspected as text. V1 now yielded connector-extracted project text containing `floating_points_V1_SEQ`, dependency references and `AE.ADBE Opacity` identifiers | No original-byte hash, XML/object graph parse, track/layer count, geometry, blend/mask/keyframe reconstruction, complete assets or Premiere playback verified. Artist's approximately 50–100 layers remains user-attested |
+| Up the Hill Backwards | Known MP4 and Ableton/project-directory locators; MP4 download-link metadata resolved in this tranche. Quad composition remains artist-attested | Media bytes and representative frames not retrieved; visual timing/topology, exact Premiere source and dependencies remain unverified. Ableton alone does not establish visual topology |
+| Narcissus | Audiovisual references documented; similarly named MET4 PDF located previously | Canonical audiovisual source and relationship to that PDF unresolved; do not treat PDF similarity as identity |
+| iPhone photo-widget compositions | Artist testimony and earlier supplied visual examples support independently changing image-bank juxtaposition as an aesthetic reference | Not an executed compatibility fixture for the new engine |
+| The Thing Without a Name / Danse macabre | Prior repository inspection documented deterministic `f(seed,t)` architecture, still-photo/spatial concepts and lineage records | No particular behavior was revalidated or imported in this tranche. No blanket compatibility, direct-ancestor or most-advanced-proven claim follows from a plan |
+| Visualizer, web/3D and exhibit branches | Existing Visual Form Canon inventories document candidate runtimes and promotion destinations | Inventory evidence is not new execution, current runtime validation, ownership selection or proof of a complete installation |
 
-## Historical preservation rule
+Raw private locators, personal paths, media and temporary URLs are not publication metadata and are intentionally excluded from this audit. Archive originals were not modified.
 
-Do not rewrite original works to make them look natively authored in the normalized engine.
+## Formal hypotheses versus implementation
 
-Use:
+The reusable hypotheses remain simultaneous apertures, independent clocks, chance conjunction, layered/nested imagery, deterministic state, spatial planes and multiple render targets. Not all are implemented or historically verified. In particular, dense nesting, opacity/blend graphs, generative audio, modulation, navigable 3D, mocap and physical installation remain later extensions.
 
-```text
-original artifact
-    ↓ preserve
-formal analysis
-    ↓
-compatibility description
-    ↓
-new-system reimplementation / descendant
-```
+Preserve originals first; produce a formal analysis and evidenced compatibility description before calling a descendant historically faithful. A synthetic quad is an engineering fixture, not a recovered Up the Hill Backwards composition.
 
-Every descendant must retain explicit provenance back to its source work.
+## Current executable result: Artifact 001
 
-## Concentric circles — revised from existing state
+The artist's amendment requires N panels to represent N independent loop instances. Each supported count/variant requires an explicit portrait/landscape design; source reuse must be explicit, never automatic filler. Orientation is presentation, not a reset of content or time.
 
-### Circle A — archaeology and normalization
+PR #9's existing 3/4/5/6-loop authoring model and eight explicit layouts were retained. A small strict-state compiler now feeds the existing Triptych `Panel`/`Segment` rendering/encoding path; it is not a second per-count rendering application. Legacy CLI scheduling is retained behind its compatibility path. The adapter accepts initial resolved-source authoring snapshots and explicitly rejects untranslated old event histories.
 
-Objective: locate surviving code/media/records for Triptych, Up the Hill Backwards, Narcissus, Floating Points, Danse, and adjacent visual-form ancestors.
+Executed evidence:
 
-Deliverable per recovered work:
+- Original synthetic Triptych baseline, including fixed/clip timing and none/panel/mix audio samples.
+- 38 passing narrow tests, including deterministic replay, independent clocks, malformed states, absent/altered media, every active loop mapped once, orientation-independent state and a real still/hold render.
+- 360 exact legacy segment-command comparisons and five complete decoded-output regressions.
+- Eight six-second H.264 reference renders: 3, 4, 5 and 6 loops, portrait 1080x1920 and landscape 1920x1080; each 24 fps / 144 frames, with reference PNGs.
+- A ninth still/video/control render, plus visual inspection of layouts and sampled transitions. Exact commands, source hashes, media facts and output hashes accompany the delivered execution bundle and implementation receipt.
 
-- source location
-- evidence state
-- original runtime/tool
-- media corpus
-- topology
-- timing model
-- chance/randomness
-- compositing model
-- interaction
-- audio behavior
-- spatial behavior
-- reproducibility
-- export/render targets
-- unique primitive contributed to the canon
+The legacy fixed/mix sample retains an observed timing quirk: 123 video frames and 5.145996-second container duration for a nominal five-second schedule. This is documented, not silently corrected. New schema-1 loop exports are silent; legacy audio behavior is preserved. Generative/routing audio, overlap/masks/depth and unsupported capabilities fail rather than masquerade as implemented features.
 
-### Circle B — common 2D visual engine
+Model-level portrait/landscape/portrait continuity and representative viewport geometry were tested. Live browser switching, device playback and resource capacity were not. Numeric resource guards do not demonstrate unrestricted playback support. Counts beyond the authored/tested 3–6 family are not advertised as supported designs.
 
-Objective: consume recovered primitives as configurations rather than hard-coded separate apps.
+## Development and publication boundary
 
-Required initial modes:
+The daily-artifact principle governs tangible development progress, not an obligation to post before the artist is ready. These fixtures are engineering proofs, not artist-approved designs or public releases. Exported artwork contains no settings/proof chrome. Any future preview must remain media-first with controls revealed on interaction.
 
-- triptych
-- quad
-- ambient widget-like composition
-- arbitrary N-layer composition
+No merge, deployment, social post, private-media publication or public sharing link was authorized or performed in this tranche. No new coding agent was dispatched. An existing failed Copilot run was observed; issue comments and prepared specifications were not treated as dispatch receipts. Execution used the active remote environment without requiring the artist's Mac.
 
-Required controls:
+## Remaining gates and next increment
 
-- hold
-- reroll
-- swap
-- move
-- seed
-- capture
+Issue #8 stays open. The engine/render proof does not close earlier-selector identity, TripTicks equivalence, Floating Points raw structural/asset recovery, Up the Hill Backwards visual verification, Narcissus identity or live-browser continuity gates.
 
-### Circle C — generative audio
+The next historical blocking gate is byte retrieval of one already-located source, followed by read-only signature/hash/structure or representative-frame inspection. A resolved Dropbox locator or extracted text alone does not close it. Preserve the eight-render regression family while addressing that bounded gate; do not restart repository discovery or add another framework.
 
-Audio must be a first-class generative process, not a soundtrack file. Add independent musical state capable of producing a different valid realization per seed/time/state.
-
-Minimum parameter families:
-
-- tempo/timebase
-- density
-- pitch/tuning field
-- rhythm probability
-- sample/source bank
-- synthesis parameters
-- spatialization
-- effect state
-
-### Circle D — modulation matrix
-
-Everything need not affect everything at once; everything should be potentially routable through explicit bounded mappings.
-
-Primitive:
-
-```text
-source → transform → destination
-```
-
-Mappings may be direct, conditional, probabilistic, feedback-bounded, or disabled. Modulation depth itself may be modulated.
-
-### Circle E — persistent public runtime
-
-Website evolves from archive to live renderer. Preserve both:
-
-- artifact: captured occurrence
-- world: process capable of producing occurrences
-
-### Circle F — audience interaction
-
-Visitors receive bounded parameters or compositional gestures, not unrestricted access to the private authoring/runtime system.
-
-### Circle G — walkable 3D world
-
-Extrude the existing panel/spatial grammar into navigable space. The first 3D world should be a spatial descendant of prior work, not a generic game environment.
-
-### Circle H — embodiment / mocap
-
-Body joints, velocity, orientation and gesture become modulation sources. Mocap enters only after the world is independently compelling.
-
-### Circle I — physical installation
-
-Projectors, displays, lights, sensors and spatial sound become physical render targets of the same composition state.
-
-## Daily-artifact invariant
-
-No development streak should exceed one day without a visible and/or audible artifact.
-
-Each workday records:
-
-```text
-system version
-source lineage
-new capability
-seed/state
-artifact path/url
-publication surfaces
-observed failure or discovery
-next mutation
-```
-
-Engineering work that cannot be demonstrated in that day's artifact should be deprioritized unless it is a blocking repair.
-
-## Initial daily artifact sequence
-
-This is a starting queue; substitute a more evidentially grounded ancestor whenever source recovery changes the order.
-
-| Day | System move | Artifact |
-| --- | --- | --- |
-| 001 | Recover/present Triptych ancestor | Existing or reconstructed three-panel composition with provenance |
-| 002 | Add reproducible media selection | Seeded triptych state; compare two seeds |
-| 003 | Add independent panel clocks | Short moving triptych showing asynchronous change |
-| 004 | Recover quad topology from Up the Hill Backwards | Four-panel state; no invented behavior beyond verified source |
-| 005 | Make topology configurable 3 ↔ 4 | One artifact demonstrating both as sibling configurations |
-| 006 | Recover one verified Narcissus primitive | Artifact isolates that primitive inside common engine |
-| 007 | Reintroduce Floating Points density principle | Higher-density composition with bounded active-source count |
-| 008 | Add nested compositing | One panel contains its own multi-source composite |
-| 009 | Add z-depth / parallax | First shallow spatialization without full walkable 3D |
-| 010 | Add first generative audio voice | Same visual state rendered with deterministic generative sound |
-| 011 | Add image → audio mapping | One explicit bounded modulation |
-| 012 | Add audio → image mapping | Reverse causal direction |
-| 013 | Add modulation amount as a parameter | Demonstrate meta-modulation |
-| 014 | Add browser live-state surface | Public page runs current state and can freeze/capture |
-
-The queue should remain flexible. The invariant is one artifact per day, not blind adherence to a calendar.
-
-## Immediate engineering objective
-
-Do not begin Unreal, Max/MSP/Jitter, TouchDesigner, mocap, or installation infrastructure yet.
-
-First prove a common composition state in the smallest executable environment already compatible with the existing canon. The initial implementation should:
-
-1. model 3-panel and 4-panel topologies as data;
-2. support still/video sources;
-3. provide independent local clocks;
-4. support seeded selection;
-5. implement hold/reroll/swap/move;
-6. serialize the complete state needed to recreate an artifact;
-7. export a still and a short moving capture path;
-8. leave routing/audio fields in the state schema even if they are initially inert.
-
-The first architectural test is not visual sophistication. It is whether one state description can reproduce both a Triptych-descended artifact and a quad-descended artifact without separate hard-coded applications.
-
-## Source-recovery gates still open
-
-### Triptych
-
-Remote records verify that the 2026-07-06 excavation found:
-
-- `TripTicks.mp4`
-- `story-triptych.mp4`
-- `session-meta/TRIPTYCH.md`
-- additional Triptych references in prior session records
-
-Those assets were local-only and were not copied into git. Source recovery remains incomplete until the implementation and/or media is available remotely or the workstation archive is restored.
-
-### Up the Hill Backwards
-
-Literal-title search against the currently accessible remote GitHub canon did not locate a convincing project implementation. Treat the quad-panel behavior as user-attested until the actual source/media is located.
-
-### Narcissus
-
-Narcissus is repeatedly named in the Triptych excavation and audiovisual-account records, but the inspected remote canon has not yet yielded a canonical implementation. Do not define its unique computational grammar until located.
-
-### Floating Points
-
-Remote textual evidence confirms Floating Points as an established project/lineage item and references a prior render-loss/failure state. Current working-session evidence supplies the Premiere multi-layer implementation history. Original project/source recovery remains open.
-
-## Promotion decision
-
-Keep this synthesis in Portvs for now because the object is still lineage + grammar + promotion logic. Do not choose the final implementation owner until the first normalized executable proves which existing runtime branch should absorb it.
-
-Promote only when one of these becomes the next durable object:
-
-- reusable source ingestion/indexing → Media Ark
-- public narrative / commerce gateway → portfolio
-- concrete browser/3D artistic runtime → art-runtime repository
-- physical playback contract → exhibit/art repository
-
-## Next action
-
-1. Continue source recovery for the four unresolved ancestors: Triptych implementation, Up the Hill Backwards, Narcissus, Floating Points.
-2. When one executable ancestor is recovered, create the first normalized `Composition` fixture from it.
-3. Build the smallest renderer capable of reproducing that fixture.
-4. Publish Artifact 001 from that renderer or, if source recovery remains blocked, publish an archival ancestor with explicit provenance while engineering continues.
-5. Every subsequent implementation increment must produce or materially improve a public artifact.
+Later circles—generative audio, explicit bounded modulation, persistent web, controlled audience interaction, walkable 3D, embodiment and physical installation—remain extension directions, not tasks or completion claims for this tranche. Portvs remains the implementation boundary until a separately authorized promotion decision is supported by an executable need.
