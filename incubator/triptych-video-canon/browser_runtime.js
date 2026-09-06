@@ -4,6 +4,8 @@
  */
 'use strict';
 const number = value => {
+  if ((typeof value !== 'string' && typeof value !== 'number') ||
+      !/^-?\d+(?:\/\d+)?$/.test(String(value))) throw new Error('Invalid compiled rational');
   const parts = String(value).split('/').map(Number);
   const result = parts.length === 1 ? parts[0] : parts[0] / parts[1];
   if (!Number.isFinite(result)) throw new Error('Invalid compiled rational');
@@ -19,8 +21,8 @@ function record(type, id, details = {}) {
   runtime.events.push({type, id, frame: runtime.frame, wall: performance.now(), ...details});
 }
 function fail(error) {
-  runtime.error = String(error); runtime.running = false;
-  for (const node of runtime.nodes.values()) node.media.pause?.();
+  runtime.error = String(error); runtime.running = false; runtime.ready = false;
+  for (const node of runtime.nodes.values()) node.media?.pause?.();
   stage.dataset.status = 'error';
   record('error', null, {message: String(error)});
 }
@@ -110,7 +112,7 @@ function tick() {
   runtime.frame = Math.min(frame, runtime.plan.frames - 1);
   if (frame >= runtime.plan.frames) {
     runtime.running = false; runtime.finished = true;
-    for (const node of runtime.nodes.values()) node.media.pause?.();
+    for (const node of runtime.nodes.values()) node.media?.pause?.();
     record('finished', null); stage.dataset.status = 'finished'; return;
   }
   try {
@@ -135,6 +137,9 @@ runtime.start = async () => {
   runtime.origin = performance.now(); runtime.running = true;
   try {
     await Promise.all([...runtime.nodes.values()].filter(n => n.kind === 'video' && !n.span.held).map(n => n.media.play()));
+    // A decoder error can arrive while play() promises are outstanding.
+    // Never turn that terminal error back into an apparent playing state.
+    if (runtime.error) throw new Error(runtime.error);
     stage.dataset.status = 'playing'; requestAnimationFrame(tick);
   } catch (error) { fail(error); throw error; }
 };
@@ -170,11 +175,74 @@ const io = window.compositionIO || {
     return [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(v => v.toString(16).padStart(2,'0')).join('');
   },
 };
+// Validate the transport document before IO or DOM mutation. This checks the
+// compiled envelope and references; it does not choose media or resolve events.
+function validatePlan(plan) {
+  const need = (test, reason) => { if (!test) throw new Error(`Invalid compiled plan: ${reason}`); };
+  const integer = (value, low, high) => Number.isSafeInteger(value) && value >= low && value <= high;
+  const ident = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(value);
+  const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+  need(plan && plan.plan_version === 1 && plan.engine_version === '1.0.0' && plan.audio === 'none', 'version/audio');
+  need(hash(plan.state_sha256), 'state hash');
+  need(integer(plan.fps, 1, 60) && integer(plan.frames, 1, 14400), 'time bounds');
+  need(Array.isArray(plan.tracks) && integer(plan.tracks.length, 1, 32), 'loop guard');
+  need(Array.isArray(plan.sources) && plan.sources.length > 0, 'sources');
+  const sources = new Map(); let total = 0;
+  for (const source of plan.sources) {
+    need(source && ident(source.id) && !sources.has(source.id), 'source identity');
+    need(hash(source.sha256) && integer(source.bytes, 1, 256*1024*1024), 'media metadata');
+    const extension = source.kind === 'video' ? 'mp4' : '(?:png|jpe?g)';
+    need(['video','still'].includes(source.kind) &&
+      new RegExp(`^media/${source.sha256}\\.${extension}$`).test(source.path), 'media path/kind');
+    need(number(source.duration) > 0, 'source duration');
+    total += source.bytes; need(total <= 256*1024*1024, 'media memory guard');
+    sources.set(source.id, source);
+  }
+  const ids = new Set(); let spanCount = 0;
+  for (const track of plan.tracks) {
+    need(track && ident(track.id) && !ids.has(track.id), 'loop identity'); ids.add(track.id);
+    need(Array.isArray(track.spans) && integer(track.spans.length, 1, plan.frames), 'spans');
+    let last = -1;
+    for (const span of track.spans) {
+      need(span && span.id === track.id && integer(span.frame, 0, plan.frames-1) &&
+        span.frame > last && (last !== -1 || span.frame === 0), 'span order/identity');
+      last = span.frame;
+      const source = sources.get(span.source);
+      need(source && span.kind === source.kind && typeof span.held === 'boolean', 'span source/kind/hold');
+      const rate = number(span.rate), offset = number(span.source_offset);
+      need(rate > 0 && rate <= 8 && (span.kind !== 'video' || rate >= 1/16), 'browser video rate');
+      need(offset >= 0 && offset < number(source.duration), 'source offset');
+      spanCount++;
+    }
+  }
+  need(spanCount <= 1024 * plan.tracks.length, 'span resource guard');
+  need(Array.isArray(plan.layout_keyframes) && integer(plan.layout_keyframes.length, 1, plan.frames), 'layouts');
+  let last = -1;
+  for (const keyframe of plan.layout_keyframes) {
+    need(keyframe && integer(keyframe.frame, 0, plan.frames-1) && keyframe.frame > last &&
+      (last !== -1 || keyframe.frame === 0), 'layout order'); last = keyframe.frame;
+    for (const orientation of ['portrait','landscape']) {
+      const cells = keyframe.layouts?.[orientation]?.cells;
+      need(Array.isArray(cells) && cells.length === ids.size, 'paired layout cells');
+      const mapped = new Set(), rectangles = [];
+      for (const cell of cells) {
+        need(cell && ids.has(cell.loop) && !mapped.has(cell.loop), 'one cell per loop'); mapped.add(cell.loop);
+        need(['contain','cover'].includes(cell.fit) && Array.isArray(cell.rect) && cell.rect.length === 4 &&
+          Array.isArray(cell.focal) && cell.focal.length === 2, 'geometry/fit');
+        const [x,y,w,h] = cell.rect.map(number), focal = cell.focal.map(number);
+        need(x >= 0 && y >= 0 && w > 0 && h > 0 && x+w <= 1+1e-12 && y+h <= 1+1e-12 &&
+          focal.every(v => v >= 0 && v <= 1), 'visible geometry');
+        for (const [a,b,c,d] of rectangles)
+          need(Math.min(x+w,a+c)-Math.max(x,a) <= 1e-12 ||
+            Math.min(y+h,b+d)-Math.max(y,b) <= 1e-12, 'overlapping cells');
+        rectangles.push([x,y,w,h]);
+      }
+    }
+  }
+}
 async function initialize() {
   runtime.plan = await io.plan();
-  if (runtime.plan.plan_version !== 1 || runtime.plan.engine_version !== '1.0.0' || runtime.plan.audio !== 'none')
-    throw new Error('Unsupported compiled plan');
-  if (!runtime.plan.tracks.length || runtime.plan.tracks.length > 32) throw new Error('Loop guard');
+  validatePlan(runtime.plan);
   let total = 0;
   for (const source of runtime.plan.sources) {
     if (!/^media\/[a-f0-9]{64}\.[a-z0-9]+$/.test(source.path)) throw new Error('Unsafe media URL');
@@ -193,6 +261,7 @@ async function initialize() {
       spans:track.spans, index:0, span:null, callbacks:0, decoded:null, busy:false});
   }
   await Promise.all([...runtime.nodes.values()].map(n => activate(n, n.spans[0], 0, true)));
+  if (runtime.error) throw new Error(runtime.error);
   runtime.ready = true; stage.dataset.status = 'ready'; applyLayout();
 }
 initialize().catch(fail);

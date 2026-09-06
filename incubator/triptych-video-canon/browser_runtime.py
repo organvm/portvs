@@ -22,6 +22,9 @@ import composition as c
 HERE = Path(__file__).resolve().parent
 PLAN_VERSION = 1
 MAX_MEDIA_BYTES = 256 * 1024 * 1024
+# Explicit native-preview capability, not a restriction on the offline model.
+# The installed Chromium rejects smaller nonzero playbackRate values.
+MIN_VIDEO_RATE = Fraction(1, 16)
 HTML = '''<!doctype html>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Composition runtime proof</title>
@@ -54,17 +57,30 @@ def compile_plan(state: dict) -> dict:
             layouts.append(dict(frame=frame, layouts=copy.deepcopy(resolved['layouts'])))
         for loop in resolved['loops']:
             ident = loop['id']
+            if loop['kind'] == 'video':
+                c.require(MIN_VIDEO_RATE <= Fraction(loop['rate']) <= 8,
+                          'browser video rate must be within 1/16..8; offline model unchanged')
             if ident not in previous or not _continues(previous[ident], loop, state['fps']):
                 tracks[ident].append(dict(frame=frame, **loop))
             previous[ident] = loop
     c.require(sum(map(len, tracks.values())) <= c.MAX_SEGMENTS * len(tracks),
               'browser span resource guard exceeded; no loops were dropped')
-    # Use normalized values directly; CSS and FFmpeg independently rasterize them.
+    # State permits Fraction-compatible spelling (including decimal strings).
+    # Emit only canonical rationals so the browser need not reproduce that parser.
+    for keyframe in layouts:
+        for layout in keyframe['layouts'].values():
+            for cell in layout['cells']:
+                for field in ('rect', 'focal'):
+                    cell[field] = [str(c.rational(value, field)) for value in cell[field]]
+    sources = copy.deepcopy(state['sources'])
+    for source in sources:
+        source['duration'] = str(c.rational(source['duration'], 'duration'))
+    # CSS and FFmpeg independently rasterize normalized layout values.
     return dict(plan_version=PLAN_VERSION, engine_version=c.ENGINE_VERSION,
                 state_sha256=hashlib.sha256(c.canonical_json(state).encode()).hexdigest(),
                 fps=state['fps'], frames=state['frames'], audio='none',
                 tracks=[dict(id=ident, spans=spans) for ident, spans in tracks.items()],
-                layout_keyframes=layouts, sources=copy.deepcopy(state['sources']))
+                layout_keyframes=layouts, sources=sources)
 
 
 def build_preview(state_path: Path, output: Path) -> dict:
