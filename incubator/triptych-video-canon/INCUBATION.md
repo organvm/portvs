@@ -86,3 +86,19 @@ passes explicitly use in-memory IO; a new default-HTTP attempt failed before
 loading. The normal served-loading gate and hosted CI remain unresolved, so
 PR #9 remains draft. Historical, device, deployment and artist gates are not
 promoted by these synthetic proofs.
+
+## September 6 NARCISSUS extension study
+
+`narcissus/README.md` describes a separate, reversible audiovisual instrument
+stacked above PR #9. It adds a fixed three-role relation layer, bounded nested
+returns, opt-in procedural sound, participant controls and forkable recipes.
+`narcissus/EXECUTION.md` and `narcissus/EVIDENCE.json` record 46 distinct scoped
+passes; the upstream ninety-test suite is not included in that count. The three
+pinned compiler/runtime dependencies are unchanged. New audio exists only in
+this extension, not the normalized silent renderer or original browser preview.
+
+Public source remains synthetic by default. Local moving-still builds and their
+captures remain private, ignored outputs, not historical recovery or approved
+artwork. Candidate owners and promotion gates remain those above; the extension
+README lists its files and specific device, sharing, sound and external-control
+gates. No owner promotion, merge, deployment or change to PR #9 readiness follows.

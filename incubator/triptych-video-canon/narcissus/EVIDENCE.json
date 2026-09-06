@@ -1,0 +1,130 @@
+{
+  "schema": "narcissus-execution-0.1",
+  "date": "2026-09-06",
+  "upstream_commit": "beecfee905cb2685b7c71ede13a1955faed6c153",
+  "unique_test_count": 46,
+  "node": {
+    "tests": 18,
+    "pass": 18,
+    "fail": 0,
+    "skip": 0,
+    "log_sha256": "77477c5ef3c8850a5800bd967145529273506072a7b01f6e14caab7c5bceef8e"
+  },
+  "synthetic_python_browser": {
+    "tests": 28,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "measurements": {
+      "browser": "144.0.7559.96",
+      "transport": "explicit isolated-document HTML injection",
+      "media_integrity": "portable SHA-256 over embedded bytes, no injected expected digest",
+      "native_resize": {
+        "same": true,
+        "count": 3,
+        "source": true,
+        "events": [],
+        "dom": [],
+        "deltas": [
+          0.9944529999999999,
+          0.9944530000000003,
+          0.994453
+        ],
+        "wall": 0.9943999999999069
+      },
+      "return_buffer": {
+        "frames": 26,
+        "bytes": 5990400,
+        "budget": 5990400
+      },
+      "offline_audio_impulse": {
+        "open": {
+          "peaks": [
+            [
+              0,
+              0.14000000059604645
+            ],
+            [
+              12000,
+              0.08999999612569809
+            ],
+            [
+              24128,
+              0.035999998450279236
+            ],
+            [
+              36256,
+              0.014400000683963299
+            ]
+          ],
+          "invalid": 0,
+          "max": 0.14000000059604645,
+          "rms": 0.0007800021284377601
+        },
+        "blocked": {
+          "peaks": [
+            [
+              0,
+              0.14000000059604645
+            ]
+          ],
+          "invalid": 0,
+          "max": 0.14000000059604645,
+          "rms": 0.0006390096531432612
+        }
+      },
+      "live_graph_rms": 0.0026004947084513875,
+      "recorded_excerpt": {
+        "bytes": 255383,
+        "mime": "video/webm;codecs=vp8,opus",
+        "audio_rms": 0.008079796276874095,
+        "streams": [
+          {
+            "codec_type": "audio",
+            "codec_name": "opus",
+            "width": null,
+            "height": null,
+            "sample_rate": "48000"
+          },
+          {
+            "codec_type": "video",
+            "codec_name": "vp8",
+            "width": 956,
+            "height": 538,
+            "sample_rate": null
+          }
+        ]
+      },
+      "synthetic_microphone_envelope": {
+        "stopped": true,
+        "count": 4,
+        "maximum": 0.357,
+        "asset": null,
+        "active": 0
+      }
+    },
+    "failed": []
+  },
+  "python_log_sha256": "9bc104cada98b95eb79ca828992cd6b7eb2ee564d884785e0747be05cf9ef356",
+  "source_sha256": {
+    "relations.js": "404fe7253f3ecc99ccfefb27b8086886f2153c085fb0220077aa50276850c800",
+    "instrument.js": "c56ca4e84050f0ceac09f9bd5d8eb0e834a56912b50ceb7c2f01098f0367d87d",
+    "index.template.html": "c96b60a1ba4c096cc904a923ef9625be8e95f7504150b67f94d786b324515189",
+    "build_study.py": "a2c71f16163a58d942c8cf4461649a202fda0a27cc7a1248a9d93a07bd117fb7",
+    "test_relations.cjs": "99d941689b2a58ef4defccccebb01367f1f9cee6cade6ee1ecd0bac49b7b8740",
+    "test_study.py": "0a5cac0a2199bef715c5aed6e15d48fc996c074db66474fbe4375ff96cf7002d"
+  },
+  "not_claimed": [
+    "full repository tests",
+    "upstream PR9 90-test rerun",
+    "served or file navigation",
+    "real camera/microphone device permission",
+    "iOS/Safari playback",
+    "sample-exact cyclic feedback",
+    "artist approval",
+    "original motion recovery",
+    "Ableton/Max connection",
+    "hosting",
+    "public artwork publication"
+  ]
+}
