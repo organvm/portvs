@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 import json
+import math
 import random
 from typing import Any
 
@@ -29,6 +30,26 @@ class LoopState:
     selection_seed: int = 0
     reroll_index: int = 0
     audible: bool = False
+
+    def validate(self) -> None:
+        if not isinstance(self.id, str) or not self.id.strip():
+            raise ValueError("loop identity must be nonempty")
+        if not isinstance(self.source, str) or not self.source.strip():
+            raise ValueError(f"loop {self.id}: source must be nonempty")
+        for name in ("trim_in", "trim_out", "rate", "offset", "held_at"):
+            value = getattr(self, name)
+            if value is None and name in ("trim_out", "held_at"):
+                continue
+            if type(value) not in (int, float) or not math.isfinite(value):
+                raise ValueError(f"loop {self.id}: {name} must be finite")
+        if self.rate <= 0 or self.trim_in < 0:
+            raise ValueError(f"loop {self.id}: rate must be positive and trim_in nonnegative")
+        if self.trim_out is not None and self.trim_out <= self.trim_in:
+            raise ValueError(f"loop {self.id}: trim_out must exceed trim_in")
+        if type(self.reroll_index) is not int or self.reroll_index < 0:
+            raise ValueError(f"loop {self.id}: reroll_index must be a nonnegative integer")
+        if type(self.selection_seed) is not int or type(self.audible) is not bool:
+            raise ValueError(f"loop {self.id}: invalid selection/audio state")
 
     def media_time(self, clock: float) -> float:
         if self.rate <= 0:
@@ -56,6 +77,8 @@ class Placement:
     focal_y: float = 0.5
 
     def validate(self) -> None:
+        if type(self.z) is not int:
+            raise ValueError(f"{self.loop_id}: z-order must be an integer")
         if self.fit not in FIT_MODES:
             raise ValueError(f"{self.loop_id}: unsupported fit {self.fit}")
         if self.width <= 0 or self.height <= 0:
@@ -104,10 +127,16 @@ class Composition:
     def validate(self) -> None:
         if self.schema_version != SCHEMA_VERSION:
             raise ValueError(f"unsupported schema version: {self.schema_version}")
+        if self.engine_version != ENGINE_VERSION:
+            raise ValueError(f"unsupported engine version: {self.engine_version}")
+        if not self.loops:
+            raise ValueError("composition must contain an independent loop")
+        for loop in self.loops:
+            loop.validate()
         if len(self.loop_ids) != len(set(self.loop_ids)):
             raise ValueError("loop ids must be unique")
         orientations = {layout.orientation for layout in self.layouts}
-        if orientations != set(ORIENTATIONS):
+        if orientations != set(ORIENTATIONS) or len(self.layouts) != len(ORIENTATIONS):
             raise ValueError("composition requires authored portrait and landscape layouts")
         for layout in self.layouts:
             layout.validate(self.loop_ids)

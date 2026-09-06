@@ -285,8 +285,9 @@ def resolve_at(state: dict, frame: int) -> dict:
                          "rate": str(rational(loop["rate"], "rate")), "held": loop["held"],
                          "epoch": loop["epoch"]})
     if not state["allow_source_reuse"]:
-        require(len({x["source"] for x in resolved}) == len(resolved),
-                "source reuse must be explicit; no duplicated filler clips")
+        require(len({x["source"] for x in resolved}) == len(resolved)
+                and len({sources[x["source"]]["sha256"] for x in resolved}) == len(resolved),
+                "source reuse must be explicit; no duplicated IDs or media bytes as filler")
     return {"frame": frame, "loops": resolved, "layouts": layouts}
 
 
@@ -387,11 +388,13 @@ def from_authoring_model(composition: Any, source_map: dict[str, dict], frames: 
         loops.append(item)
     layouts = {}
     for layout in composition.layouts:
-        require(all(p.z == 0 for p in layout.placements), "authoring adapter does not implement depth")
+        # Cells are serialized back-to-front; stable sorting preserves the old
+        # equal-z fixture order. This is draw order, not permission for overlap.
+        ordered = sorted(layout.placements, key=lambda p: p.z)
         require(layout.orientation not in layouts, "duplicate orientation in authoring model")
         layouts[layout.orientation] = dict(name=layout.id, cells=[
             dict(loop=p.loop_id, rect=[exact(v) for v in (p.x,p.y,p.width,p.height)],
-                 fit=p.fit, focal=[exact(p.focal_x),exact(p.focal_y)]) for p in layout.placements])
+                 fit=p.fit, focal=[exact(p.focal_x),exact(p.focal_y)]) for p in ordered])
     state = dict(schema_version=SCHEMA_VERSION,engine_version=ENGINE_VERSION,rng=RNG,
                  seed=composition.seed,fps=fps,frames=frames,allow_source_reuse=False,
                  sources=list(sources.values()),loops=loops,layouts=layouts,events=[],
