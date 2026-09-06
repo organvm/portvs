@@ -22,3 +22,6 @@ artifact-001/*
 !artifact-001/baseline/
 artifact-001/baseline/*
 !artifact-001/baseline/render_triptych.original.py
+
+# Generated labeled media, browser copies and runtime evidence stay local.
+runtime-proof/
