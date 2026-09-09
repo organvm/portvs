@@ -99,3 +99,22 @@ The previous 90-test application result was not rerun in this pass. A separate
 HTTP environment preflight reproduced blocked Chromium navigation while Python
 HTTP returned 200; no browser policy changed. PR #9 remains draft, with served
 loading and hosted CI still open. No runtime, renderer or authoring UI changed.
+
+## September 9 remote served-browser rail
+
+The browser proof now accepts a pinned absolute executable through
+`PORTVS_BROWSER_EXECUTABLE` and discovers both Chromium and the Google Chrome
+binary preinstalled on GitHub-hosted Ubuntu runners. The controls proof waits
+for asynchronous source transitions to settle before sampling authored event
+boundaries; this removes a false negative without relaxing source, clock,
+identity, geometry or decoded-frame assertions. Three discovery regressions
+cover pinned, invalid and GitHub-runner browser paths.
+
+`.github/workflows/portvs-browser-proof.yml` is a read-only, PR-only execution
+rail scoped to this incubator. It installs the pinned Python requirements, uses
+the runner's installed browser, runs every proof shard through normal HTTP and
+WebCrypto, and retains only bounded JSON/log receipts. It does not deploy,
+publish, approve or merge. A successful run proves the served synthetic
+incubator fixture at its exact PR head; it does not prove physical devices,
+historical originals, artwork fidelity, practical hardware capacity or artist
+approval.

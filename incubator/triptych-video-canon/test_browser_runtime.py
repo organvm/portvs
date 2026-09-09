@@ -1,6 +1,6 @@
 """Executed browser proof: native playback, keyed nodes, container-only layout.
 
-Requires Python Playwright, an installed Chromium, Pillow, FFmpeg and ffprobe.
+Requires Python Playwright, an installed Chromium/Chrome, Pillow, FFmpeg and ffprobe.
 No browser download, remote endpoint or public deployment is used by the suite.
 """
 from __future__ import annotations
@@ -17,10 +17,34 @@ import threading
 import unittest
 from fractions import Fraction
 from pathlib import Path
+from unittest.mock import patch
 
 import composition as c
 from browser_runtime import build_preview, compile_plan
 from make_runtime_fixture import HERE, ROOT, prepare
+
+
+def browser_executable() -> str:
+    """Resolve a caller-pinned or preinstalled browser without downloading one."""
+    configured = os.environ.get('PORTVS_BROWSER_EXECUTABLE')
+    if configured:
+        candidate = Path(configured).expanduser()
+        if not candidate.is_absolute():
+            raise RuntimeError('PORTVS_BROWSER_EXECUTABLE must be an absolute path')
+        try:
+            resolved = candidate.resolve(strict=True)
+        except OSError as exc:
+            raise RuntimeError('PORTVS_BROWSER_EXECUTABLE does not exist') from exc
+        if not resolved.is_file() or not os.access(resolved, os.X_OK):
+            raise RuntimeError('PORTVS_BROWSER_EXECUTABLE must be an executable file')
+        return str(resolved)
+    for name in ('chromium', 'chromium-browser', 'google-chrome', 'google-chrome-stable'):
+        executable = shutil.which(name)
+        if executable:
+            return executable
+    raise RuntimeError(
+        'Installed Chromium/Chrome is required; set PORTVS_BROWSER_EXECUTABLE '
+        'to an absolute executable path (no download or skip substituted)')
 
 
 class PlanTests(unittest.TestCase):
@@ -96,6 +120,28 @@ class PlanTests(unittest.TestCase):
     def test_preview_cannot_replace_source_state(self):
         with self.assertRaises(c.StateError):build_preview(ROOT/'state-3.json',ROOT)
 
+    def test_browser_discovery_accepts_pinned_absolute_executable(self):
+        import tempfile
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp:
+            executable = Path(temp) / 'chrome'
+            executable.write_text('#!/bin/sh\n')
+            executable.chmod(0o700)
+            with patch.dict(os.environ, {'PORTVS_BROWSER_EXECUTABLE': str(executable)}):
+                self.assertEqual(browser_executable(), str(executable.resolve()))
+
+    def test_browser_discovery_rejects_relative_or_missing_override(self):
+        for value in ('chrome', str((ROOT / 'missing-chrome').resolve())):
+            with self.subTest(value=value), \
+                    patch.dict(os.environ, {'PORTVS_BROWSER_EXECUTABLE': value}):
+                with self.assertRaises(RuntimeError):
+                    browser_executable()
+
+    def test_browser_discovery_supports_github_runner_chrome(self):
+        def locate(name):
+            return '/usr/bin/google-chrome' if name == 'google-chrome' else None
+        with patch.dict(os.environ, {}, clear=True), patch.object(shutil, 'which', side_effect=locate):
+            self.assertEqual(browser_executable(), '/usr/bin/google-chrome')
+
 
 class QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self,*args): pass
@@ -109,8 +155,7 @@ class BrowserTests(unittest.TestCase):
         cls.server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(QuietHandler,directory=str(ROOT)))
         cls.thread=threading.Thread(target=cls.server.serve_forever,daemon=True);cls.thread.start()
         cls.pw=sync_playwright().start()
-        executable=shutil.which('chromium') or shutil.which('chromium-browser')
-        if executable is None:raise RuntimeError('Installed Chromium is required; no download or skip substituted')
+        executable=browser_executable()
         cls.browser=cls.pw.chromium.launch(executable_path=executable,headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
         cls.base=f'http://127.0.0.1:{cls.server.server_port}'
         cls.transport=os.environ.get('PORTVS_BROWSER_TRANSPORT','http')
@@ -156,6 +201,16 @@ class BrowserTests(unittest.TestCase):
         self.assertIsNone(snapshot['error'])
         page.screenshot(path=str(ROOT/f'evidence/{name}.png'))
         return snapshot
+
+    def settled_snapshot(self, page, frame, name):
+        """Capture a frame only after every asynchronous source transition settles."""
+        page.wait_for_function(
+            """target => {
+              const value = window.compositionRuntime;
+              return value && (value.error || (value.frame >= target &&
+                [...value.nodes.values()].every(node => !node.busy)));
+            }""", arg=frame)
+        return self.snap(page, name)
 
     def check_model(self,snapshot,state,tolerance=.18):
         expected={x['id']:x for x in c.resolve_at(state,snapshot['frame'])['loops']}
@@ -244,8 +299,7 @@ class BrowserTests(unittest.TestCase):
         page=self.open_preview('controls');state=c.load_state(ROOT/'state-controls.json')
         page.evaluate('compositionRuntime.start()');snapshots=[]
         for frame in (30,40,54,67,91,118,140):
-            page.wait_for_function(f'compositionRuntime.frame >= {frame} || compositionRuntime.error')
-            snapshot=self.snap(page,f'controls-{frame}');self.check_model(snapshot,state)
+            snapshot=self.settled_snapshot(page,frame,f'controls-{frame}');self.check_model(snapshot,state)
             snapshots.append(snapshot)
         a,b=snapshots[:2]
         self.assertAlmostEqual(a['loops'][0]['currentTime'],b['loops'][0]['currentTime'],delta=.001)
@@ -265,8 +319,7 @@ class BrowserTests(unittest.TestCase):
         page=self.open_preview('trim');state=c.load_state(ROOT/'state-trim.json')
         page.evaluate('compositionRuntime.start()');snapshots=[]
         for frame in (30,54,78,102):
-            page.wait_for_function(f'compositionRuntime.frame >= {frame} || compositionRuntime.error')
-            snapshot=self.snap(page,f'trim-{frame}');self.check_model(snapshot,state)
+            snapshot=self.settled_snapshot(page,frame,f'trim-{frame}');self.check_model(snapshot,state)
             self.assertGreaterEqual(snapshot['loops'][0]['currentTime'],1)
             self.assertLess(snapshot['loops'][0]['currentTime'],2)
             snapshots.append(snapshot)
