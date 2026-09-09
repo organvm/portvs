@@ -9,7 +9,7 @@ import math
 import shutil
 import subprocess
 import tempfile
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -67,8 +67,6 @@ class Settings:
     tone_strength: float
     tone_smoothing: int
     panel_order: tuple[str, str, str]
-    media_fit: str = "cover"
-    focal: tuple[float, float] = (0.5, 0.5)
 
 
 @dataclass(frozen=True)
@@ -95,23 +93,6 @@ class Panel:
     source_offset: float
     source_duration: float | None
     source_has_audio: bool
-    source_kind: str = "video"
-    playback_rate: float = 1.0
-    held: bool = False
-    clocked: bool = False
-
-
-@dataclass(frozen=True)
-class Placement:
-    """Resolved presentation geometry; never owns a source or a clock."""
-
-    name: str
-    x: int
-    y: int
-    width: int
-    height: int
-    fit: str = "cover"
-    focal: tuple[float, float] = (0.5, 0.5)
 
 
 @dataclass(frozen=True)
@@ -120,7 +101,6 @@ class Segment:
     start: float
     duration: float
     panels: tuple[Panel, ...]
-    placements: tuple[Placement, ...] | None = None
 
     @property
     def end(self) -> float:
@@ -141,9 +121,6 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         help="Optional JSON settings file. Relative paths resolve from the manifest.",
     )
-    parser.add_argument("--state", type=Path, help="Versioned independent-loop composition state.")
-    parser.add_argument("--orientation", choices=("portrait", "landscape"),
-                        help="Explicit layout orientation for --state exports.")
     parser.add_argument("--output", type=Path, help="Output .mp4 path.")
     parser.add_argument("--work-dir", type=Path, help="Temporary segment directory.")
     parser.add_argument(
@@ -797,20 +774,14 @@ def finish_video_filter(
     elif settings.tone_mode == "histeq":
         tone_filters.append("histeq")
     tone = "".join(f",{filter_name}" for filter_name in tone_filters)
-    if settings.media_fit == "contain":
-        geometry = (
-            f"scale={panel_width}:{settings.height}:force_original_aspect_ratio=decrease,"
-            f"pad={panel_width}:{settings.height}:(ow-iw)/2:(oh-ih)/2:black,"
-        )
-    else:
-        crop = f"crop={panel_width}:{settings.height}"
-        if settings.focal != (0.5, 0.5):
-            crop += f":(in_w-out_w)*{settings.focal[0]}:(in_h-out_h)*{settings.focal[1]}"
-        geometry = (
-            f"scale={panel_width}:{settings.height}:force_original_aspect_ratio=increase,"
-            f"{crop},"
-        )
-    return f"{input_label}{geometry}setsar=1{tone},format=yuv420p{output_label}"
+    return (
+        f"{input_label}"
+        f"scale={panel_width}:{settings.height}:"
+        "force_original_aspect_ratio=increase,"
+        f"crop={panel_width}:{settings.height},"
+        f"setsar=1{tone},format=yuv420p"
+        f"{output_label}"
+    )
 
 
 def source_frame_count(panel: Panel, settings: Settings, multiplier: int = 1) -> int:
@@ -827,17 +798,6 @@ def video_source_filters(
     output_label: str,
 ) -> list[str]:
     input_label = f"[{input_index}:v]"
-    if panel.clocked:
-        # Model compilation splits on source changes, events and loop wraps.
-        # Padding protects the final decoded frame at fractional source boundaries.
-        chain = f"trim=start={seconds(panel.source_offset)},setpts=PTS-STARTPTS,"
-        if panel.held or panel.source_kind == "still":
-            chain += f"fps={settings.fps},trim=end_frame=1,loop=loop=-1:size=1:start=0,"
-        else:
-            chain += f"setpts=PTS/{seconds(panel.playback_rate)},fps={settings.fps},"
-            chain += f"tpad=stop_mode=clone:stop_duration={seconds(segment.duration)},"
-        chain += f"trim=duration={seconds(segment.duration)},setpts=PTS-STARTPTS,"
-        return [finish_video_filter(input_label + chain, panel_width, settings, output_label)]
     if settings.video_direction == "forward":
         return [
             finish_video_filter(
@@ -908,20 +868,12 @@ def render_segment(
     segment: Segment,
     settings: Settings,
 ) -> None:
-    placements = segment.placements
-    if placements is None:
-        # Compatibility adapter: legacy ordering, reels, sizes and schedules stay intact.
-        names = layout_panel_names(settings)
-        width = settings.width // 3 if settings.layout == "story" else settings.width
-        placements = tuple(Placement(name, i * width, 0, width, settings.height)
-                           for i, name in enumerate(names))
+    layout_panels = layout_panel_names(settings)
+    panel_width = settings.width // 3 if settings.layout == "story" else settings.width
     command = ["ffmpeg", "-hide_banner", "-loglevel", "warning", "-y"]
-    if segment.placements is not None:
-        command += ["-filter_complex_threads", "1"]
-    render_panels = [panel_by_name(segment, cell.name) for cell in placements]
+    render_panels = [panel_by_name(segment, panel_name) for panel_name in layout_panels]
 
-    for panel, cell in zip(render_panels, placements):
-        panel_width = cell.width
+    for panel in render_panels:
         if panel.source_path is None:
             command.extend(
                 [
@@ -930,18 +882,14 @@ def render_segment(
                     "-t",
                     seconds(segment.duration),
                     "-i",
-                    f"color=c=black:s={panel_width}x{cell.height}:r={settings.fps}",
+                    f"color=c=black:s={panel_width}x{settings.height}:r={settings.fps}",
                 ]
             )
-        elif panel.source_kind == "still":
-            command.extend(["-loop", "1", "-framerate", str(settings.fps), "-i", str(panel.source_path)])
         else:
             command.extend(["-stream_loop", "-1", "-i", str(panel.source_path)])
 
     filters: list[str] = []
     for index, panel in enumerate(render_panels):
-        cell = placements[index]
-        cell_settings = replace(settings, height=cell.height, media_fit=cell.fit, focal=cell.focal)
         input_label = f"[{index}:v]"
         output_label = f"[v{index}]"
         if panel.source_path is None:
@@ -960,8 +908,8 @@ def render_segment(
                     index,
                     panel,
                     segment,
-                    cell_settings,
-                    cell.width,
+                    settings,
+                    panel_width,
                     output_label,
                 )
             )
@@ -993,20 +941,11 @@ def render_segment(
                 )
             )
 
-    if segment.placements is None:
-        # Keep the historical graph unchanged, including legacy encoder behavior.
-        if len(render_panels) == 1:
-            filters.append("[v0]copy[outv]")
-        else:
-            labels = "".join(f"[v{index}]" for index in range(len(render_panels)))
-            filters.append(f"{labels}hstack=inputs={len(render_panels)}[outv]")
+    if len(render_panels) == 1:
+        filters.append("[v0]copy[outv]")
     else:
-        filters.append(f"color=c=black:s={settings.width}x{settings.height}:r={settings.fps}:"
-                       f"d={seconds(segment.duration)}[canvas0]")
-        for index, cell in enumerate(placements):
-            target = "[outv]" if index == len(placements) - 1 else f"[canvas{index + 1}]"
-            filters.append(f"[canvas{index}][v{index}]overlay=x={cell.x}:y={cell.y}:"
-                           f"shortest=1{target}")
+        labels = "".join(f"[v{index}]" for index in range(len(render_panels)))
+        filters.append(f"{labels}hstack=inputs={len(render_panels)}[outv]")
 
     command.extend(
         [
@@ -1104,11 +1043,6 @@ def render(segments: list[Segment], settings: Settings) -> None:
 
 def main() -> int:
     args = parse_args()
-    if args.state is not None:
-        from composition import render_from_args
-        return render_from_args(args)
-    if args.orientation is not None:
-        raise SystemExit("--orientation requires --state; legacy CLI is unchanged.")
     settings = build_settings(args)
     clips = load_clips(settings)
     segments = build_segments(clips, settings)

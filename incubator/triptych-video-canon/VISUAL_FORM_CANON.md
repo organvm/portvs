@@ -149,3 +149,24 @@ exhibit/kiosk/gallery, and lifecycle governance.
 The next omega gate is stricter: those branches must reconcile remote repository
 canon first, then local prompt/session evidence. A local-only match is not enough
 to claim the project surface exists.
+
+## N-loop execution checkpoint — 2026-09-05
+
+This checkpoint supplements, rather than revalidates, the older census counts
+above. Detailed commands and limits are in `RUNTIME_RECEIPT.md`.
+
+| Evidence class | Current boundary |
+| --- | --- |
+| Historical works | Floating Points projects and Up the Hill Backwards media remain archive locators or connector-extracted text, not recovered original-byte graphs or visually verified historical compositions. TripTicks, First Circle, the earlier selector and conceptual Triptych remain distinct unresolved identities. Narcissus audiovisual identity is unresolved; similarly named PDFs do not close it. |
+| Reusable formal principles | N independent loops; authored spatial hierarchy; independent local clocks; deterministic selection/replay; presentation-only orientation changes; hold/release/reroll/swap/move. A principle is not proof of an ancestor's implementation. |
+| Current engine capability | The existing FFmpeg path renders paired 3/4/5/6 engineering compositions. A separately named labeled contain-study family has paired 3–7 exports. Experimental seven uses the same compiler and renderer, not a new application. |
+| Current runtime proof | Native Chromium video playback survives five advancing viewport checkpoints and independent container resizing with persistent keyed video nodes. Source decisions come from the Python compiler. The executed transport was offline file-backed IO; HTTP-served loading and physical devices remain unverified. |
+| Future extensions | Dense overlap, masking, opacity/blend graphs, nesting, generative audio, live input events, indefinite playback, audience controls and physical installation are not completed by these tests. Historical features do not automatically become requirements. |
+
+All arrangements remain **synthetic authored engineering compositions**, not
+artist-approved geometry, historical reconstructions or public releases.
+The browser preview is bounded and silent. Its source-bank hashes and portable
+state can reproduce the corresponding offline exports; browser sampling is not
+frame-exact. Resource guards are not measured hardware ceilings. Unsupported
+layout pairs and excessive resource requests fail explicitly rather than
+reducing N or adding filler. Portvs remains the incubator; promotion is undecided.
