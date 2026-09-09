@@ -1,4 +1,12 @@
-# PORTVS — The Reflection Membrane
+# PORTVS — Portal
+
+PORTVS is the portal to the project universe. It connects work, source records and
+independent implementations. Creative projects may be incubated here while their
+home is unresolved; incubation does not make PORTVS their permanent owner.
+
+The artist clarified Narcissus's independent ownership on September 9, 2026.
+See [Visual project ownership](VISUAL_PROJECT_OWNERSHIP.md) for the existing code,
+separate engine, literary connection and precise extraction/provisioning state.
 
 The unified work graph for the multi-agent ecosystem. Every artifact — memory, plans, governance, registries, conventions — is a node in one graph.
 
@@ -59,4 +67,5 @@ All agents read this file on startup. The human reads it to understand system st
 
 ## Authoritative Copy
 
-This repository (`4444J99/portvs`) is the single source of truth. All other surfaces are projections or caches.
+This repository (`organvm/portvs`) is the authoritative portal/work-graph source.
+Linked projects remain authoritative for their own code, artwork and source records.
