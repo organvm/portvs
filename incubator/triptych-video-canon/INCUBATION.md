@@ -1,3 +1,20 @@
+# Ownership clarification — September 9, 2026
+
+The artist identifies PORTVS as the portal and Narcissus as an independent work.
+The Narcissus code in draft PR #10 and shared engine work in draft PR #9 have
+been prepared as separate local Git repositories with relevant history preserved.
+Remote repository creation is not available through the current connection;
+existing branches and source files therefore remain intact pending cutover.
+See [the current ownership record](../../VISUAL_PROJECT_OWNERSHIP.md).
+
+Narcissus's historical capture/transmission/viewing sequence comes from the
+artist's September 9 account. Study 001's SELF/REFLECTION/ECHO roles are an
+experimental interpretation. The literary relationship to the MFA application
+story and MET4morfoses is now corroborated; original audiovisual binaries and
+historical timing remain separate questions.
+
+The earlier incubation record follows and retains its historical wording.
+
 # Triptych Video Canon
 
 Status: incubating

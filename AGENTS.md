@@ -1,7 +1,15 @@
 # Portvs Agent Protocol
 
-Read this file at session start. Portvs is the reflection membrane and work graph,
-not a dumping ground for every new idea.
+Read this file at session start. Portvs is the portal and work graph connecting
+independent projects.
+
+## Selected visual-project ownership — September 9, 2026
+
+The artist has selected an independent home for Narcissus. Shared composition
+tooling also belongs outside the portal. Read VISUAL_PROJECT_OWNERSHIP.md before
+continuing PR #9 or #10; their current paths are retained development history,
+not a new permanent ownership claim. This decision supersedes earlier unresolved
+promotion language without implying a merge, deployment or completed provisioning.
 
 ## Operating Rule
 
